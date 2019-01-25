@@ -13,7 +13,5 @@ export interface IOptions extends IModuleOptions {
     id?: string;
     connection: string
     opts?: redis.RedisOptions
-    exportProvider?: boolean
-    providerId?: string
     scripts?: IScript[]
 }
