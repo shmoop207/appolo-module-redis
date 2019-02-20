@@ -51,5 +51,20 @@ describe("redis module Spec", function () {
         let result = await redisProvider.get("redis_inc");
         result.should.be.eq(5);
     });
+    it("should lock", async () => {
+        let lock = await redisProvider.lock("redis_lock", 10);
+        let lock2 = await redisProvider.lock("redis_lock", 10);
+        lock.should.not.be.ok;
+        lock2.should.be.ok;
+    });
+    it('should del by pattern', async () => {
+        await redisProvider.set('haa1', { v: 1 });
+        await redisProvider.set('haa2', { v: 2 });
+        let results = await redisProvider.scan('haa*');
+        results.length.should.be.eq(2);
+        await redisProvider.delPattern('haa*');
+        results = await redisProvider.scan('haa*');
+        results.length.should.be.eq(0);
+    });
 });
 //# sourceMappingURL=spec.js.map

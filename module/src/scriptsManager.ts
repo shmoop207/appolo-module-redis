@@ -15,6 +15,8 @@ export class ScriptsManager {
 
     private readonly Scripts: IScript[] = [{
         name: "get_by_expire", path: path.resolve(__dirname, "../lua/getByExpire.lua"), args: 1
+    },{
+        name: "lock", path: path.resolve(__dirname, "../lua/lock.lua"), args: 1
     }];
 
     public async load() {

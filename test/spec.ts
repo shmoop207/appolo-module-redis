@@ -1,6 +1,6 @@
-import { createApp, App } from 'appolo'
-import { RedisModule } from "../index";
-import { RedisProvider } from "../module/src/redisProvider";
+import {App, createApp} from 'appolo'
+import {RedisModule} from "../index";
+import {RedisProvider} from "../module/src/redisProvider";
 import chai = require('chai');
 import sinonChai = require("sinon-chai");
 
@@ -12,7 +12,7 @@ let redisProvider: RedisProvider;
 
 describe("redis module Spec", function () {
 
-    if(!process.env.REDIS){
+    if (!process.env.REDIS) {
         throw new Error(`please define process.env.REDIS`)
     }
 
@@ -20,7 +20,7 @@ describe("redis module Spec", function () {
 
         app = createApp({root: __dirname, environment: "production", port: 8181});
 
-        await app.module(new RedisModule({connection:  process.env.REDIS}));
+        await app.module(new RedisModule({connection: process.env.REDIS}));
 
         await app.launch();
 
@@ -62,7 +62,7 @@ describe("redis module Spec", function () {
         await redisProvider.setHash('h1', 'k2', {v: 2});
 
         const result = await redisProvider.scanHashValues('h1');
-        result.should.deep.equal([{"v":1}, {"v":2}]);
+        result.should.deep.equal([{"v": 1}, {"v": 2}]);
     });
 
     it("should increment expire", async () => {
@@ -76,6 +76,30 @@ describe("redis module Spec", function () {
         result.should.be.eq(5);
 
     })
+
+    it("should lock", async () => {
+
+        let lock = await redisProvider.lock("redis_lock", 10);
+        let lock2 = await redisProvider.lock("redis_lock", 10);
+
+        lock.should.not.be.ok;
+        lock2.should.be.ok
+    })
+
+    it('should del by pattern', async () => {
+        await redisProvider.set('haa1', {v: 1});
+        await redisProvider.set('haa2', {v: 2});
+
+        let results = await redisProvider.scan('haa*');
+
+        results.length.should.be.eq(2)
+
+        await redisProvider.delPattern('haa*');
+
+        results = await redisProvider.scan('haa*');
+
+        results.length.should.be.eq(0)
+    });
 });
 
 

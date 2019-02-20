@@ -1,5 +1,6 @@
 import    _ = require('lodash');
 import Redis = require("ioredis");
+import Q = require("bluebird");
 import {define, inject, singleton} from 'appolo'
 
 @define()
@@ -95,19 +96,26 @@ export class RedisProvider {
         return value;
     }
 
-    public async delHash(hashMap: string, key: string): Promise<void> {
+    public async delHash(hashMap: string, ...keys: string[]): Promise<void> {
 
-        await this.redisClient.hdel(hashMap, key)
+        await this.redisClient.hdel(hashMap, ...keys)
     }
 
-    public async del(key: string): Promise<void> {
+    public async del(...keys: string[]): Promise<void> {
 
-        await this.redisClient.del(key)
+        await this.redisClient.del(...keys);
     }
 
-    public async setWithExpire<T>(key: string, value: T, expire: number): Promise<T> {
+    public async delPattern(pattern: string): Promise<void> {
 
-        await this.redisClient.setex(key, expire, JSON.stringify(value));
+        let keys = await this.scan(pattern);
+
+        await Q.map(_.chunk(keys, 100), chunk => this.del(...chunk), {concurrency: 1});
+    }
+
+    public async setWithExpire<T>(key: string, value: T, seconds: number): Promise<T> {
+
+        await this.redisClient.setex(key, seconds, JSON.stringify(value));
         return value;
 
     }
@@ -188,6 +196,18 @@ export class RedisProvider {
         await multi.exec();
 
     }
+
+
+    public async lock(key: string, seconds: number, updateLockTime: boolean = false): Promise<boolean> {
+        let result = await this.runScript<number>("lock", [key], [seconds, updateLockTime], false);
+
+        return !!result;
+    }
+
+    public async unlock(key: string): Promise<void> {
+        let result = await this.del(key);
+    }
+
 
     public async runScript<T>(name: string, keys: string[], values: any[], parse: boolean = true): Promise<T> {
 

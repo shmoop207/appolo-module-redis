@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const _ = require("lodash");
+const Q = require("bluebird");
 const appolo_1 = require("appolo");
 let RedisProvider = class RedisProvider {
     get redis() {
@@ -57,14 +58,18 @@ let RedisProvider = class RedisProvider {
         let value = JSON.parse(result);
         return value;
     }
-    async delHash(hashMap, key) {
-        await this.redisClient.hdel(hashMap, key);
+    async delHash(hashMap, ...keys) {
+        await this.redisClient.hdel(hashMap, ...keys);
     }
-    async del(key) {
-        await this.redisClient.del(key);
+    async del(...keys) {
+        await this.redisClient.del(...keys);
     }
-    async setWithExpire(key, value, expire) {
-        await this.redisClient.setex(key, expire, JSON.stringify(value));
+    async delPattern(pattern) {
+        let keys = await this.scan(pattern);
+        await Q.map(_.chunk(keys, 100), chunk => this.del(...chunk), { concurrency: 1 });
+    }
+    async setWithExpire(key, value, seconds) {
+        await this.redisClient.setex(key, seconds, JSON.stringify(value));
         return value;
     }
     async expire(key, seconds) {
@@ -115,6 +120,13 @@ let RedisProvider = class RedisProvider {
         multi.incrby(key, count);
         multi.expire(key, seconds);
         await multi.exec();
+    }
+    async lock(key, seconds, updateLockTime = false) {
+        let result = await this.runScript("lock", [key], [seconds, updateLockTime], false);
+        return !!result;
+    }
+    async unlock(key) {
+        let result = await this.del(key);
     }
     async runScript(name, keys, values, parse = true) {
         if (!this.redisClient[name]) {
