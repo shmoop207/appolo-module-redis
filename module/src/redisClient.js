@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const appolo_1 = require("appolo");
 const _ = require("lodash");
+const url = require("url");
 const Redis = require("ioredis");
 let RedisClient = class RedisClient {
     constructor() {
@@ -10,8 +11,12 @@ let RedisClient = class RedisClient {
     }
     async get() {
         try {
+            let urlParams = url.parse(this.moduleOptions.connection);
             let opts = _.defaults(this.moduleOptions.opts || {}, this.Defaults);
             opts.lazyConnect = true;
+            if (urlParams.protocol == "rediss:") {
+                opts.tls = true;
+            }
             let redis = new Redis(this.moduleOptions.connection, opts);
             await redis.connect();
             return redis;
