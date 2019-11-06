@@ -96,6 +96,22 @@ export class RedisProvider {
         return value;
     }
 
+    public async getMultiHash<T>(hKey: string, keys: string[]): Promise<T[]> {
+
+        let values = await this.redisClient.hmget(hKey, ...keys);
+
+        return _.map<string, T>(values, value => JSON.parse(value));
+    }
+
+    public async setMultiHash<T>(hKey: string, keys: string[], values: T[]): Promise<void> {
+
+        let data = _.flatten(_.zip(keys, _.map(values, value => JSON.stringify(value))));
+
+        if (data.length) {
+            await this.redisClient.hmset(hKey, ...data);
+        }
+    }
+
     public async delHash(hashMap: string, ...keys: string[]): Promise<void> {
 
         await this.redisClient.hdel(hashMap, ...keys)

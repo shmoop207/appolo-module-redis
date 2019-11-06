@@ -58,6 +58,16 @@ let RedisProvider = class RedisProvider {
         let value = JSON.parse(result);
         return value;
     }
+    async getMultiHash(hKey, keys) {
+        let values = await this.redisClient.hmget(hKey, ...keys);
+        return _.map(values, value => JSON.parse(value));
+    }
+    async setMultiHash(hKey, keys, values) {
+        let data = _.flatten(_.zip(keys, _.map(values, value => JSON.stringify(value))));
+        if (data.length) {
+            await this.redisClient.hmset(hKey, ...data);
+        }
+    }
     async delHash(hashMap, ...keys) {
         await this.redisClient.hdel(hashMap, ...keys);
     }

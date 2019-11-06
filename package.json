@@ -1,6 +1,6 @@
 {
   "name": "@appolo/redis",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "appolo redis module",
   "keywords": [
     "redis",
@@ -8,9 +8,9 @@
   ],
   "main": "index.js",
   "dependencies": {
-    "appolo": "^6.0.62",
-    "bluebird": "^3.5.3",
-    "ioredis": "^4.9.0",
+    "appolo": "^6.0.88",
+    "bluebird": "^3.7.1",
+    "ioredis": "^4.14.1",
     "lodash": "^4.17.10"
   },
   "publishConfig": {
