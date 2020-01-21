@@ -16,6 +16,14 @@ let RedisProvider = class RedisProvider {
         let value = JSON.parse(result);
         return value;
     }
+    async multiGet(keys) {
+        let output = [];
+        let results = await this.redisClient.mget(...keys);
+        for (let i = 0, len = (results ? results.length : 0); i < len; i++) {
+            output.push(JSON.parse(results[i]));
+        }
+        return output;
+    }
     async set(key, value) {
         await this.redisClient.set(key, JSON.stringify(value));
         return value;

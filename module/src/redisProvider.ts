@@ -25,6 +25,19 @@ export class RedisProvider {
         return value;
     }
 
+    public async multiGet<T>(keys: string):Promise<T[]>{
+
+        let output: T[] = [];
+
+        let results = await this.redisClient.mget(...keys);
+
+        for (let i = 0, len = (results ? results.length : 0); i < len; i++) {
+            output.push(JSON.parse(results[i]));
+        }
+
+        return output;
+    }
+
     public async set<T>(key: string, value: T): Promise<T> {
 
         await this.redisClient.set(key, JSON.stringify(value));
