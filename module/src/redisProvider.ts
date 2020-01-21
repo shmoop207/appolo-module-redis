@@ -25,7 +25,7 @@ export class RedisProvider {
         return value;
     }
 
-    public async multiGet<T>(keys: string):Promise<T[]>{
+    public async multiGet<T>(keys: string[]):Promise<T[]>{
 
         let output: T[] = [];
 
