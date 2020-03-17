@@ -2,19 +2,20 @@ import    _ = require('lodash');
 import Redis = require("ioredis");
 import Q = require("bluebird");
 import {define, inject, singleton} from 'appolo'
+import {RedisClientFactory} from "./redisClientFactory";
 
 @define()
 @singleton()
 export class RedisProvider {
-    @inject() protected redisClient: Redis.Redis;
+    @inject() protected redisClientFactory: RedisClientFactory;
 
     public get redis(): Redis.Redis {
-        return this.redisClient;
+        return this.redisClientFactory.getClient();
     }
 
     public async get<T>(key: string): Promise<T> {
 
-        let result = await this.redisClient.get(key);
+        let result = await this.redis.get(key);
 
         if (_.isNull(result)) {
             return null;
@@ -25,11 +26,11 @@ export class RedisProvider {
         return value;
     }
 
-    public async multiGet<T>(keys: string[]):Promise<T[]>{
+    public async multiGet<T>(keys: string[]): Promise<T[]> {
 
         let output: T[] = [];
 
-        let results = await this.redisClient.mget(...keys);
+        let results = await this.redisClientFactory.getClient().mget(...keys);
 
         for (let i = 0, len = (results ? results.length : 0); i < len; i++) {
             output.push(JSON.parse(results[i]));
@@ -40,13 +41,13 @@ export class RedisProvider {
 
     public async set<T>(key: string, value: T): Promise<T> {
 
-        await this.redisClient.set(key, JSON.stringify(value));
+        await this.redis.set(key, JSON.stringify(value));
         return value
     }
 
     public async getAllHash<T>(key: string): Promise<{ [index: string]: T }> {
 
-        let results = await this.redisClient.hgetall(key);
+        let results = await this.redis.hgetall(key);
 
         let output: { [index: string]: T } = {};
 
@@ -61,7 +62,7 @@ export class RedisProvider {
 
     public async getHashKeys<T>(key: string): Promise<string[]> {
 
-        let results = await this.redisClient.hkeys(key);
+        let results = await this.redis.hkeys(key);
 
         return results || [];
     }
@@ -70,7 +71,7 @@ export class RedisProvider {
 
         let output: T[] = [];
 
-        let results = await this.redisClient.hvals(key);
+        let results = await this.redis.hvals(key);
 
         for (let i = 0, len = (results ? results.length : 0); i < len; i++) {
             output.push(JSON.parse(results[i]));
@@ -91,14 +92,14 @@ export class RedisProvider {
 
     public async setHash<T>(hashMap: string, key: string, value: T): Promise<T> {
 
-        await this.redisClient.hset(hashMap, key, JSON.stringify(value));
+        await this.redis.hset(hashMap, key, JSON.stringify(value));
         return value
 
     }
 
     public async getHash<T>(hashMap: string, key: string): Promise<T> {
 
-        let result = await this.redisClient.hget(hashMap, key);
+        let result = await this.redis.hget(hashMap, key);
 
         if (_.isNull(result)) {
             return null;
@@ -111,7 +112,7 @@ export class RedisProvider {
 
     public async getMultiHash<T>(hKey: string, keys: string[]): Promise<T[]> {
 
-        let values = await this.redisClient.hmget(hKey, ...keys);
+        let values = await this.redis.hmget(hKey, ...keys);
 
         return _.map<string, T>(values, value => JSON.parse(value));
     }
@@ -121,18 +122,18 @@ export class RedisProvider {
         let data = _.flatten(_.zip(keys, _.map(values, value => JSON.stringify(value))));
 
         if (data.length) {
-            await this.redisClient.hmset(hKey, ...data);
+            await this.redis.hmset(hKey, ...data);
         }
     }
 
     public async delHash(hashMap: string, ...keys: string[]): Promise<void> {
 
-        await this.redisClient.hdel(hashMap, ...keys)
+        await this.redis.hdel(hashMap, ...keys)
     }
 
     public async del(...keys: string[]): Promise<void> {
 
-        await this.redisClient.del(...keys);
+        await this.redis.del(...keys);
     }
 
     public async delPattern(pattern: string): Promise<void> {
@@ -144,19 +145,19 @@ export class RedisProvider {
 
     public async setWithExpire<T>(key: string, value: T, seconds: number): Promise<T> {
 
-        await this.redisClient.setex(key, seconds, JSON.stringify(value));
+        await this.redis.setex(key, seconds, JSON.stringify(value));
         return value;
 
     }
 
     public async expire(key: string, seconds: number): Promise<void> {
 
-        await this.redisClient.expire(key, seconds);
+        await this.redis.expire(key, seconds);
     }
 
     public async scan(pattern: string, cursor: number = 0, accumulativeResults: string[] = []): Promise<string[]> {
 
-        const [nextCursor, currentResults] = await this.redisClient.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
+        const [nextCursor, currentResults] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
 
         accumulativeResults = [...accumulativeResults, ...currentResults];
 
@@ -193,9 +194,9 @@ export class RedisProvider {
         return output;
     }
 
-    private async scanHashRecursive(key: string, pattern: string, count: number, cursor: number, accumulativeResults: string[]) {
+    private async scanHashRecursive(key: string, pattern: string, count: number, cursor: number | string, accumulativeResults: string[]) {
 
-        const [nextCursor, currentResults] = await this.redisClient.hscan(key, cursor, 'MATCH', pattern, 'COUNT', count.toString());
+        const [nextCursor, currentResults] = await this.redis.hscan(key, cursor as number, 'MATCH', pattern, 'COUNT', count.toString());
 
         accumulativeResults = [...accumulativeResults, ...currentResults];
 
@@ -208,17 +209,17 @@ export class RedisProvider {
 
     public async ttl(key: string): Promise<number> {
 
-        return this.redisClient.ttl(key);
+        return this.redis.ttl(key);
     }
 
     public async increment(key: string, count: number = 1): Promise<void> {
 
-        await this.redisClient.incrby(key, count);
+        await this.redis.incrby(key, count);
     }
 
     public async incrementExpire(key: string, seconds: number, count: number = 1): Promise<void> {
 
-        let multi = this.redisClient.multi();
+        let multi = this.redis.multi();
         multi.incrby(key, count);
         multi.expire(key, seconds);
 
@@ -241,11 +242,11 @@ export class RedisProvider {
     public async runScript<T>(name: string, keys: string[], values: any[], parse: boolean = true): Promise<T> {
 
 
-        if (!this.redisClient[name]) {
+        if (!this.redis[name]) {
             throw new Error(`failed to find script ${name}`)
         }
 
-        let value = await this.redisClient[name](...keys, ...values);
+        let value = await this.redis[name](...keys, ...values);
 
         if (_.isNull(value)) {
             return null;

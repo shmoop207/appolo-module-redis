@@ -1,4 +1,4 @@
-import {App, createApp} from 'appolo'
+import {App, createApp,Util} from 'appolo'
 import {RedisModule} from "../index";
 import {RedisProvider} from "../module/src/redisProvider";
 import chai = require('chai');
@@ -20,7 +20,7 @@ describe("redis module Spec", function () {
 
         app = createApp({root: __dirname, environment: "production", port: 8181});
 
-        await app.module(new RedisModule({connection: process.env.REDIS}));
+        await app.module(new RedisModule({connection: process.env.REDIS, fallbackConnections: [process.env.REDIS]}));
 
         await app.launch();
 
@@ -84,7 +84,7 @@ describe("redis module Spec", function () {
 
         lock.should.not.be.ok;
         lock2.should.be.ok
-    })
+    });
 
     it('should del by pattern', async () => {
         await redisProvider.set('haa1', {v: 1});
@@ -92,13 +92,27 @@ describe("redis module Spec", function () {
 
         let results = await redisProvider.scan('haa*');
 
-        results.length.should.be.eq(2)
+        results.length.should.be.eq(2);
 
         await redisProvider.delPattern('haa*');
 
         results = await redisProvider.scan('haa*');
 
         results.length.should.be.eq(0)
+    });
+
+    it("should load cache expire lua with fallback", async () => {
+
+       let test =  await redisProvider.redis.quit();
+
+        await Util.delay(100);
+
+        await redisProvider.setWithExpire("redis_test", 1, 10000);
+
+        const result = await redisProvider.getByExpire("redis_test", 2);
+
+        result.value.should.be.eq(1);
+        result.validExpire.should.be.ok;
     });
 });
 

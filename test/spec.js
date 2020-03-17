@@ -14,7 +14,7 @@ describe("redis module Spec", function () {
     }
     beforeEach(async () => {
         app = appolo_1.createApp({ root: __dirname, environment: "production", port: 8181 });
-        await app.module(new index_1.RedisModule({ connection: process.env.REDIS }));
+        await app.module(new index_1.RedisModule({ connection: process.env.REDIS, fallbackConnections: [process.env.REDIS] }));
         await app.launch();
         redisProvider = app.injector.get("redisProvider");
     });
@@ -65,6 +65,14 @@ describe("redis module Spec", function () {
         await redisProvider.delPattern('haa*');
         results = await redisProvider.scan('haa*');
         results.length.should.be.eq(0);
+    });
+    it("should load cache expire lua with fallback", async () => {
+        let test = await redisProvider.redis.quit();
+        await appolo_1.Util.delay(100);
+        await redisProvider.setWithExpire("redis_test", 1, 10000);
+        const result = await redisProvider.getByExpire("redis_test", 2);
+        result.value.should.be.eq(1);
+        result.validExpire.should.be.ok;
     });
 });
 //# sourceMappingURL=spec.js.map

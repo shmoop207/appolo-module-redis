@@ -12,6 +12,7 @@ export interface IScript {
 export interface IOptions extends IModuleOptions {
     id?: string;
     connection: string
+    fallbackConnections?: string[]
     opts?: redis.RedisOptions
     scripts?: IScript[]
 }

@@ -1,27 +1,26 @@
 "use strict";
 import {define, factory, IFactory, inject, singleton} from 'appolo'
 import {IOptions} from "../IOptions";
-import * as _ from "lodash";
 import * as url from "url";
+import {Objects} from "appolo-utils";
 import Redis = require("ioredis");
 
 @define()
 @singleton()
-@factory()
-export class RedisClient implements IFactory<Redis.Redis> {
+export class RedisClientCreator {
 
     @inject() protected moduleOptions: IOptions;
 
     private readonly Defaults = {enableReadyCheck: true, lazyConnect: true, keepAlive: 1000};
 
 
-    public async get(): Promise<Redis.Redis> {
+    public async create(connection: string): Promise<Redis.Redis> {
 
         try {
 
-            let urlParams = url.parse(this.moduleOptions.connection)
+            let urlParams = url.parse(connection);
 
-            let opts = _.defaults(this.moduleOptions.opts || {}, this.Defaults);
+            let opts = Objects.defaults(this.moduleOptions.opts || {}, this.Defaults);
             opts.lazyConnect = true;
 
             if (urlParams.protocol == "rediss:") {

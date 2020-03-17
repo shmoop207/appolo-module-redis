@@ -23,13 +23,7 @@ let ScriptsManager = class ScriptsManager {
             if (!lua) {
                 lua = await this._loadPath(script.path);
             }
-            if (this.redisClient[script.name]) {
-                return;
-            }
-            this.redisClient.defineCommand(script.name, {
-                numberOfKeys: script.args,
-                lua: lua
-            });
+            this.redisClientFactory.defineCommand(script, lua);
         });
     }
     _loadPath(file) {
@@ -38,7 +32,7 @@ let ScriptsManager = class ScriptsManager {
 };
 tslib_1.__decorate([
     appolo_1.inject()
-], ScriptsManager.prototype, "redisClient", void 0);
+], ScriptsManager.prototype, "redisClientFactory", void 0);
 tslib_1.__decorate([
     appolo_1.inject()
 ], ScriptsManager.prototype, "moduleOptions", void 0);

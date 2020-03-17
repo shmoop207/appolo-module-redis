@@ -5,17 +5,18 @@ import Redis = require("ioredis");
 import Q = require("bluebird");
 import path = require("path");
 import fs = require("fs");
+import {RedisClientFactory} from "./redisClientFactory";
 
 @define()
 @singleton()
 export class ScriptsManager {
 
-    @inject() protected redisClient: Redis.Redis;
+    @inject() protected redisClientFactory: RedisClientFactory;
     @inject() protected moduleOptions: IOptions;
 
     private readonly Scripts: IScript[] = [{
         name: "get_by_expire", path: path.resolve(__dirname, "../lua/getByExpire.lua"), args: 1
-    },{
+    }, {
         name: "lock", path: path.resolve(__dirname, "../lua/lock.lua"), args: 1
     }];
 
@@ -35,14 +36,7 @@ export class ScriptsManager {
                 lua = await this._loadPath(script.path)
             }
 
-            if (this.redisClient[script.name]) {
-                return;
-            }
-
-            this.redisClient.defineCommand(script.name, {
-                numberOfKeys: script.args,
-                lua: lua
-            });
+            this.redisClientFactory.defineCommand(script, lua)
         });
 
     }
