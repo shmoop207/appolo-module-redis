@@ -15,4 +15,8 @@ export class RedisModule extends Module<IOptions> {
         return [{id: this.moduleOptions.id, type: RedisProvider}];
     }
 
+    public static for(options?: IOptions): RedisModule {
+        return new RedisModule(options);
+    }
+
 }
