@@ -93,16 +93,25 @@ let RedisProvider = class RedisProvider {
     async expire(key, seconds) {
         await this.redis.expire(key, seconds);
     }
-    async scan(pattern, cursor = 0, accumulativeResults = []) {
-        const [nextCursor, currentResults] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
+    async scan(pattern = '*', count = 1000) {
+        const keys = await this._scanRecursive(pattern, count, 0, []);
+        return keys;
+    }
+    async scanValues(pattern = '*', count = 1000) {
+        const keys = await this._scanRecursive(pattern, count, 0, []);
+        let results = await Q.map(keys, key => this.get(key), { concurrency: count });
+        return results;
+    }
+    async _scanRecursive(pattern, count, cursor, accumulativeResults) {
+        const [nextCursor, currentResults] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
         accumulativeResults = [...accumulativeResults, ...currentResults];
         if (nextCursor !== '0') {
-            return this.scan(pattern, parseInt(nextCursor), accumulativeResults);
+            return this._scanRecursive(pattern, count, parseInt(nextCursor), accumulativeResults);
         }
         return accumulativeResults;
     }
     async scanHash(key, pattern = '*', count = 1000) {
-        const keysAndValues = await this.scanHashRecursive(key, pattern, count, 0, []);
+        const keysAndValues = await this._scanHashRecursive(key, pattern, count, 0, []);
         const output = {};
         // the result array of hscan is [key1, value1, key2, value2, ...]
         for (let i = 0, len = keysAndValues.length; i < len; i += 2) {
@@ -111,7 +120,7 @@ let RedisProvider = class RedisProvider {
         return output;
     }
     async scanHashValues(key, pattern = '*', count = 1000) {
-        const keysAndValues = await this.scanHashRecursive(key, pattern, count, 0, []);
+        const keysAndValues = await this._scanHashRecursive(key, pattern, count, 0, []);
         const output = [];
         // the result array of hscan is [key1, value1, key2, value2, ...] so if we want only values we need to filter the keys
         for (let i = 1, len = keysAndValues.length; i < len; i += 2) {
@@ -119,11 +128,11 @@ let RedisProvider = class RedisProvider {
         }
         return output;
     }
-    async scanHashRecursive(key, pattern, count, cursor, accumulativeResults) {
+    async _scanHashRecursive(key, pattern, count, cursor, accumulativeResults) {
         const [nextCursor, currentResults] = await this.redis.hscan(key, cursor, 'MATCH', pattern, 'COUNT', count.toString());
         accumulativeResults = [...accumulativeResults, ...currentResults];
         if (nextCursor !== '0') {
-            return this.scanHashRecursive(key, pattern, count, nextCursor, accumulativeResults);
+            return this._scanHashRecursive(key, pattern, count, nextCursor, accumulativeResults);
         }
         return accumulativeResults;
     }

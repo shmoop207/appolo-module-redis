@@ -155,21 +155,37 @@ export class RedisProvider {
         await this.redis.expire(key, seconds);
     }
 
-    public async scan(pattern: string, cursor: number = 0, accumulativeResults: string[] = []): Promise<string[]> {
+    public async scan(pattern: string = '*', count: number = 1000): Promise<string[]> {
 
-        const [nextCursor, currentResults] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
+        const keys = await this._scanRecursive(pattern, count, 0, []);
+
+        return keys;
+    }
+
+    public async scanValues<T>(pattern: string = '*', count: number = 1000): Promise<T[]> {
+
+        const keys = await this._scanRecursive(pattern, count, 0, []);
+
+        let results = await Q.map(keys, key => this.get<T>(key), {concurrency: count});
+
+        return results;
+    }
+
+    private async _scanRecursive(pattern: string, count: number, cursor: number, accumulativeResults: string[]): Promise<string[]> {
+
+        const [nextCursor, currentResults] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
 
         accumulativeResults = [...accumulativeResults, ...currentResults];
 
         if (nextCursor !== '0') {
-            return this.scan(pattern, parseInt(nextCursor), accumulativeResults);
+            return this._scanRecursive(pattern, count, parseInt(nextCursor), accumulativeResults);
         }
 
         return accumulativeResults;
     }
 
     public async scanHash<T>(key: string, pattern: string = '*', count: number = 1000): Promise<{ [index: string]: T }> {
-        const keysAndValues = await this.scanHashRecursive(key, pattern, count, 0, []);
+        const keysAndValues = await this._scanHashRecursive(key, pattern, count, 0, []);
 
         const output: { [index: string]: T } = {};
 
@@ -182,7 +198,7 @@ export class RedisProvider {
     }
 
     public async scanHashValues<T>(key: string, pattern: string = '*', count: number = 1000): Promise<T[]> {
-        const keysAndValues = await this.scanHashRecursive(key, pattern, count, 0, []);
+        const keysAndValues = await this._scanHashRecursive(key, pattern, count, 0, []);
 
         const output = [];
 
@@ -194,14 +210,14 @@ export class RedisProvider {
         return output;
     }
 
-    private async scanHashRecursive(key: string, pattern: string, count: number, cursor: number | string, accumulativeResults: string[]) {
+    private async _scanHashRecursive(key: string, pattern: string, count: number, cursor: number | string, accumulativeResults: string[]) {
 
         const [nextCursor, currentResults] = await this.redis.hscan(key, cursor as number, 'MATCH', pattern, 'COUNT', count.toString());
 
         accumulativeResults = [...accumulativeResults, ...currentResults];
 
         if (nextCursor !== '0') {
-            return this.scanHashRecursive(key, pattern, count, nextCursor, accumulativeResults);
+            return this._scanHashRecursive(key, pattern, count, nextCursor, accumulativeResults);
         }
 
         return accumulativeResults;

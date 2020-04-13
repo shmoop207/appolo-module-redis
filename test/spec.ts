@@ -1,4 +1,4 @@
-import {App, createApp,Util} from 'appolo'
+import {App, createApp, Util} from 'appolo'
 import {RedisModule} from "../index";
 import {RedisProvider} from "../module/src/redisProvider";
 import chai = require('chai');
@@ -101,9 +101,19 @@ describe("redis module Spec", function () {
         results.length.should.be.eq(0)
     });
 
+    it('should scan values pattern', async () => {
+        await redisProvider.set('haa1', {v: 1});
+        await redisProvider.set('haa2', {v: 2});
+
+        let results = await redisProvider.scanValues('haa*');
+
+        results.should.be.deep.equal([{v: 2}, {v: 1}]);
+
+    });
+
     it("should load cache expire lua with fallback", async () => {
 
-       let test =  await redisProvider.redis.quit();
+        let test = await redisProvider.redis.quit();
 
         await Util.delay(100);
 

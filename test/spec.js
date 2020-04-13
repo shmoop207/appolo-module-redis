@@ -66,6 +66,12 @@ describe("redis module Spec", function () {
         results = await redisProvider.scan('haa*');
         results.length.should.be.eq(0);
     });
+    it('should scan values pattern', async () => {
+        await redisProvider.set('haa1', { v: 1 });
+        await redisProvider.set('haa2', { v: 2 });
+        let results = await redisProvider.scanValues('haa*');
+        results.should.be.deep.equal([{ v: 2 }, { v: 1 }]);
+    });
     it("should load cache expire lua with fallback", async () => {
         let test = await redisProvider.redis.quit();
         await appolo_1.Util.delay(100);
