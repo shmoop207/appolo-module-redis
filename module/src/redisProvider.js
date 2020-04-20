@@ -82,9 +82,9 @@ let RedisProvider = class RedisProvider {
     async del(...keys) {
         await this.redis.del(...keys);
     }
-    async delPattern(pattern) {
-        let keys = await this.scan(pattern);
-        await Q.map(_.chunk(keys, 100), chunk => this.del(...chunk), { concurrency: 1 });
+    async delPattern(pattern, count = 1000) {
+        let keys = await this.scan(pattern, count);
+        await Q.map(keys, key => this.del(key), { concurrency: count });
     }
     async setWithExpire(key, value, seconds) {
         await this.redis.setex(key, seconds, JSON.stringify(value));

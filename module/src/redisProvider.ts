@@ -136,11 +136,11 @@ export class RedisProvider {
         await this.redis.del(...keys);
     }
 
-    public async delPattern(pattern: string): Promise<void> {
+    public async delPattern(pattern: string, count: number = 1000): Promise<void> {
 
-        let keys = await this.scan(pattern);
+        let keys = await this.scan(pattern, count);
 
-        await Q.map(_.chunk(keys, 100), chunk => this.del(...chunk), {concurrency: 1});
+        await Q.map(keys, key => this.del(key), {concurrency: count});
     }
 
     public async setWithExpire<T>(key: string, value: T, seconds: number): Promise<T> {
