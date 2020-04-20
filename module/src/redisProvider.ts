@@ -171,6 +171,20 @@ export class RedisProvider {
         return results;
     }
 
+    public async scanKeysValues<T>(pattern: string = '*', count: number = 1000): Promise<{ [index: string]: T }> {
+
+        const keys = await this._scanRecursive(pattern, count, 0, []);
+
+        let dto: { [index: string]: T } = {};
+
+        let results = await Q.map(keys, async (key: string) => {
+            let value = await this.get<T>(key);
+            dto[key] = value;
+        }, {concurrency: count});
+
+        return dto;
+    }
+
     private async _scanRecursive(pattern: string, count: number, cursor: number, accumulativeResults: string[]): Promise<string[]> {
 
         const [nextCursor, currentResults] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
@@ -228,18 +242,22 @@ export class RedisProvider {
         return this.redis.ttl(key);
     }
 
-    public async increment(key: string, count: number = 1): Promise<void> {
+    public async increment(key: string, count: number = 1): Promise<number> {
 
-        await this.redis.incrby(key, count);
+        let result = await this.redis.incrby(key, count);
+
+        return result;
     }
 
-    public async incrementExpire(key: string, seconds: number, count: number = 1): Promise<void> {
+    public async incrementExpire(key: string, seconds: number, count: number = 1): Promise<number> {
 
         let multi = this.redis.multi();
         multi.incrby(key, count);
         multi.expire(key, seconds);
 
-        await multi.exec();
+        let result = await multi.exec();
+
+        return result[0][1]
 
     }
 

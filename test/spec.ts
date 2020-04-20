@@ -67,9 +67,10 @@ describe("redis module Spec", function () {
 
     it("should increment expire", async () => {
 
-
         await redisProvider.incrementExpire("redis_inc", 10, 2);
-        await redisProvider.incrementExpire("redis_inc", 10, 3);
+        let inc = await redisProvider.incrementExpire("redis_inc", 10, 3);
+
+        inc.should.be.eq(5);
 
         let result = await redisProvider.get("redis_inc");
 
@@ -85,6 +86,7 @@ describe("redis module Spec", function () {
         lock.should.not.be.ok;
         lock2.should.be.ok
     });
+
 
     it('should del by pattern', async () => {
         await redisProvider.set('haa1', {v: 1});
@@ -108,6 +110,16 @@ describe("redis module Spec", function () {
         let results = await redisProvider.scanValues('haa*');
 
         results.should.be.deep.equal([{v: 2}, {v: 1}]);
+
+    });
+
+    it('should scan keys values pattern', async () => {
+        await redisProvider.set('haa1', {v: 1});
+        await redisProvider.set('haa2', {v: 2});
+
+        let results = await redisProvider.scanKeysValues('haa*');
+
+        results.should.be.deep.equal({haa1: {v: 1}, haa2: {v: 2}});
 
     });
 

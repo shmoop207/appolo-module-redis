@@ -102,6 +102,15 @@ let RedisProvider = class RedisProvider {
         let results = await Q.map(keys, key => this.get(key), { concurrency: count });
         return results;
     }
+    async scanKeysValues(pattern = '*', count = 1000) {
+        const keys = await this._scanRecursive(pattern, count, 0, []);
+        let dto = {};
+        let results = await Q.map(keys, async (key) => {
+            let value = await this.get(key);
+            dto[key] = value;
+        }, { concurrency: count });
+        return dto;
+    }
     async _scanRecursive(pattern, count, cursor, accumulativeResults) {
         const [nextCursor, currentResults] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
         accumulativeResults = [...accumulativeResults, ...currentResults];
@@ -140,13 +149,15 @@ let RedisProvider = class RedisProvider {
         return this.redis.ttl(key);
     }
     async increment(key, count = 1) {
-        await this.redis.incrby(key, count);
+        let result = await this.redis.incrby(key, count);
+        return result;
     }
     async incrementExpire(key, seconds, count = 1) {
         let multi = this.redis.multi();
         multi.incrby(key, count);
         multi.expire(key, seconds);
-        await multi.exec();
+        let result = await multi.exec();
+        return result[0][1];
     }
     async lock(key, seconds, updateLockTime = false) {
         let result = await this.runScript("lock", [key], [seconds, updateLockTime], false);

@@ -47,7 +47,8 @@ describe("redis module Spec", function () {
     });
     it("should increment expire", async () => {
         await redisProvider.incrementExpire("redis_inc", 10, 2);
-        await redisProvider.incrementExpire("redis_inc", 10, 3);
+        let inc = await redisProvider.incrementExpire("redis_inc", 10, 3);
+        inc.should.be.eq(5);
         let result = await redisProvider.get("redis_inc");
         result.should.be.eq(5);
     });
@@ -71,6 +72,12 @@ describe("redis module Spec", function () {
         await redisProvider.set('haa2', { v: 2 });
         let results = await redisProvider.scanValues('haa*');
         results.should.be.deep.equal([{ v: 2 }, { v: 1 }]);
+    });
+    it('should scan keys values pattern', async () => {
+        await redisProvider.set('haa1', { v: 1 });
+        await redisProvider.set('haa2', { v: 2 });
+        let results = await redisProvider.scanKeysValues('haa*');
+        results.should.be.deep.equal({ haa1: { v: 1 }, haa2: { v: 2 } });
     });
     it("should load cache expire lua with fallback", async () => {
         let test = await redisProvider.redis.quit();
