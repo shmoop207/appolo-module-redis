@@ -1,6 +1,6 @@
 {
   "name": "@appolo/redis",
-  "version": "7.0.3",
+  "version": "7.0.5",
   "description": "appolo redis module",
   "keywords": [
     "redis",
@@ -30,7 +30,7 @@
     "@types/sinon": "^7.5.2",
     "@types/sinon-chai": "^3.2.3",
     "chai": "^4.2.0",
-    "mocha": "^7.1.0",
+    "mocha": "^7.1.2",
     "sinon": "^9.0.1",
     "sinon-chai": "^3.5.0",
     "typescript": "^3.8.3"

@@ -11,7 +11,6 @@ import {RedisClientFactory} from "./redisClientFactory";
 @singleton()
 export class ScriptsManager {
 
-    @inject() protected redisClientFactory: RedisClientFactory;
     @inject() protected moduleOptions: IOptions;
 
     private readonly Scripts: IScript[] = [{
@@ -20,7 +19,7 @@ export class ScriptsManager {
         name: "lock", path: path.resolve(__dirname, "../lua/lock.lua"), args: 1
     }];
 
-    public async load() {
+    public async load(clients: Redis.Redis[]) {
 
         let scripts = (this.moduleOptions.scripts || []).concat(this.Scripts);
 
@@ -36,8 +35,24 @@ export class ScriptsManager {
                 lua = await this._loadPath(script.path)
             }
 
-            this.redisClientFactory.defineCommand(script, lua)
+            this._defineCommand(clients, script, lua)
         });
+
+    }
+
+    private _defineCommand(clients: Redis.Redis[], script: IScript, lua: string) {
+        for (let i = 0; i < clients.length; i++) {
+            let client = clients[i];
+
+            if (client[script.name]) {
+                continue;
+            }
+
+            client.defineCommand(script.name, {
+                numberOfKeys: script.args,
+                lua: lua
+            });
+        }
 
     }
 

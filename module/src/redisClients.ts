@@ -4,15 +4,30 @@ import {IOptions} from "../IOptions";
 import * as url from "url";
 import {Objects} from "appolo-utils";
 import Redis = require("ioredis");
+import {ScriptsManager} from "./scriptsManager";
 
 @define()
 @singleton()
-export class RedisClientCreator {
+@factory()
+export class RedisClients implements IFactory<Redis.Redis[]> {
 
     @inject() protected moduleOptions: IOptions;
+    @inject() protected scriptsManager: ScriptsManager;
 
     private readonly Defaults = {enableReadyCheck: true, lazyConnect: true, keepAlive: 1000};
 
+    public async get(): Promise<Redis.Redis[]> {
+        let fallback = this.moduleOptions.fallbackConnections;
+
+        let connections = [this.moduleOptions.connection]
+            .concat(fallback && Array.isArray(fallback) ? fallback : []);
+
+        let clients = await Promise.all(connections.map(conn => this.create(conn)))
+
+        await this.scriptsManager.load(clients);
+
+        return clients
+    }
 
     public async create(connection: string): Promise<Redis.Redis> {
 

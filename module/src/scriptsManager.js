@@ -13,7 +13,7 @@ let ScriptsManager = class ScriptsManager {
                 name: "lock", path: path.resolve(__dirname, "../lua/lock.lua"), args: 1
             }];
     }
-    async load() {
+    async load(clients) {
         let scripts = (this.moduleOptions.scripts || []).concat(this.Scripts);
         await Q.map(scripts, async (script) => {
             if (!script.lua && !script.path) {
@@ -23,16 +23,25 @@ let ScriptsManager = class ScriptsManager {
             if (!lua) {
                 lua = await this._loadPath(script.path);
             }
-            this.redisClientFactory.defineCommand(script, lua);
+            this._defineCommand(clients, script, lua);
         });
+    }
+    _defineCommand(clients, script, lua) {
+        for (let i = 0; i < clients.length; i++) {
+            let client = clients[i];
+            if (client[script.name]) {
+                continue;
+            }
+            client.defineCommand(script.name, {
+                numberOfKeys: script.args,
+                lua: lua
+            });
+        }
     }
     _loadPath(file) {
         return Q.fromCallback(c => fs.readFile(path.resolve(process.cwd(), file), { encoding: "utf8" }, c));
     }
 };
-tslib_1.__decorate([
-    appolo_1.inject()
-], ScriptsManager.prototype, "redisClientFactory", void 0);
 tslib_1.__decorate([
     appolo_1.inject()
 ], ScriptsManager.prototype, "moduleOptions", void 0);

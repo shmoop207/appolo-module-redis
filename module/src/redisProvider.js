@@ -49,8 +49,8 @@ let RedisProvider = class RedisProvider {
         }
         return output;
     }
-    async getByExpire(key, expire) {
-        let result = await this.runScript("get_by_expire", [key], [expire]);
+    async getByExpire(key, expire, refresh) {
+        let result = await this.runScript("get_by_expire", [key], [expire, refresh || (expire / 2)]);
         result = result ? { value: JSON.parse(result[0]), validExpire: result[1] == 1 } : null;
         return result;
     }

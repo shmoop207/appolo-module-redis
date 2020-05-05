@@ -80,9 +80,9 @@ export class RedisProvider {
         return output;
     }
 
-    public async getByExpire<T>(key: string, expire: number): Promise<{ value: T, validExpire: boolean }> {
+    public async getByExpire<T>(key: string, expire: number, refresh?: number): Promise<{ value: T, validExpire: boolean }> {
 
-        let result = await this.runScript<any>("get_by_expire", [key], [expire]);
+        let result = await this.runScript<any>("get_by_expire", [key], [expire, refresh || (expire / 2)]);
 
         result = result ? {value: JSON.parse(result[0]), validExpire: result[1] == 1} : null;
 
