@@ -10,8 +10,9 @@ if (not value) then
 end
 
 local ttl = redis.call('TTL', hash)
+local liveTime = expire - ttl
 
-if (ttl < refresh) then
+if (liveTime >= refresh) then
     redis.call('EXPIRE', hash, expire)
     return { value, 0, ttl }
 else
