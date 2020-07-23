@@ -3,9 +3,13 @@ import {RedisModule} from "../index";
 import {RedisProvider} from "../module/src/redisProvider";
 import chai = require('chai');
 import sinonChai = require("sinon-chai");
+import show = Mocha.reporters.Base.cursor.show;
 
 require('chai').should();
 chai.use(sinonChai);
+
+const should = chai.should();
+
 
 let app: App;
 let redisProvider: RedisProvider;
@@ -38,6 +42,20 @@ describe("redis module Spec", function () {
 
         result.should.be.eq(1);
         redisProvider.redis.set.should.be.ok;
+    });
+
+    it("should get and delete redis", async () => {
+        await redisProvider.set("redis_test", {test: 1});
+
+        const result = await redisProvider.getAndDel<{test:1}>("redis_test");
+
+        result.test.should.be.eq(1);
+
+        let result2 = await redisProvider.get<{test:1}>("redis_test");
+
+        should.not.exist(result2)
+
+
     });
 
     it("should load cache expire lua", async () => {

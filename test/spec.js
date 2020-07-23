@@ -6,6 +6,7 @@ const chai = require("chai");
 const sinonChai = require("sinon-chai");
 require('chai').should();
 chai.use(sinonChai);
+const should = chai.should();
 let app;
 let redisProvider;
 describe("redis module Spec", function () {
@@ -26,6 +27,13 @@ describe("redis module Spec", function () {
         const result = await redisProvider.get("redis_test");
         result.should.be.eq(1);
         redisProvider.redis.set.should.be.ok;
+    });
+    it("should get and delete redis", async () => {
+        await redisProvider.set("redis_test", { test: 1 });
+        const result = await redisProvider.getAndDel("redis_test");
+        result.test.should.be.eq(1);
+        let result2 = await redisProvider.get("redis_test");
+        should.not.exist(result2);
     });
     it("should load cache expire lua", async () => {
         await redisProvider.setWithExpire("redis_test", 1, 10000);

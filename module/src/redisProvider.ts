@@ -261,6 +261,27 @@ export class RedisProvider {
 
     }
 
+    public async getAndDel<T>(key: string): Promise<T> {
+
+        let multi = this.redis.multi();
+        multi.get(key);
+        multi.del(key);
+
+        let result = await multi.exec();
+
+        let resultGet = result[0][1];
+
+        if (_.isNull(resultGet)) {
+            return null;
+        }
+
+        let value = JSON.parse(resultGet);
+
+        return value;
+
+
+    }
+
 
     public async lock(key: string, seconds: number, updateLockTime: boolean = false): Promise<boolean> {
         let result = await this.runScript<number>("lock", [key], [seconds, updateLockTime], false);
