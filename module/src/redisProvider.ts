@@ -289,6 +289,12 @@ export class RedisProvider {
         return !!result;
     }
 
+    public async isLocked(key: string): Promise<boolean> {
+        let result = await this.get<number>(key);
+
+        return !!result;
+    }
+
     public async unlock(key: string): Promise<void> {
         let result = await this.del(key);
     }

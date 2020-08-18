@@ -175,6 +175,10 @@ let RedisProvider = class RedisProvider {
         let result = await this.runScript("lock", [key], [seconds, updateLockTime], false);
         return !!result;
     }
+    async isLocked(key) {
+        let result = await this.get(key);
+        return !!result;
+    }
     async unlock(key) {
         let result = await this.del(key);
     }
