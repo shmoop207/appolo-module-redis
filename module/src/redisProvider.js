@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RedisProvider = void 0;
 const tslib_1 = require("tslib");
 const _ = require("lodash");
 const Q = require("bluebird");
@@ -56,6 +57,13 @@ let RedisProvider = class RedisProvider {
     }
     async setHash(hashMap, key, value) {
         await this.redis.hset(hashMap, key, JSON.stringify(value));
+        return value;
+    }
+    async setHashWithExpire(hashMap, key, value, seconds) {
+        let multi = this.redis.multi();
+        multi.hset(hashMap, key, JSON.stringify(value));
+        multi.expire(key, seconds);
+        await multi.exec();
         return value;
     }
     async getHash(hashMap, key) {

@@ -1,6 +1,7 @@
 "use strict";
 var RedisModule_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RedisModule = void 0;
 const tslib_1 = require("tslib");
 const index_1 = require("appolo/index");
 const redisProvider_1 = require("./src/redisProvider");

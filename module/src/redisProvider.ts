@@ -97,6 +97,17 @@ export class RedisProvider {
 
     }
 
+    public async setHashWithExpire<T>(hashMap: string, key: string, value: T,seconds: number): Promise<T> {
+
+        let multi = this.redis.multi();
+        multi.hset(hashMap, key, JSON.stringify(value));
+        multi.expire(key, seconds);
+
+        await multi.exec();
+
+        return value
+    }
+
     public async getHash<T>(hashMap: string, key: string): Promise<T> {
 
         let result = await this.redis.hget(hashMap, key);
