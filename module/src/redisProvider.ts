@@ -97,7 +97,7 @@ export class RedisProvider {
 
     }
 
-    public async setHashWithExpire<T>(hashMap: string, key: string, value: T,seconds: number): Promise<T> {
+    public async setHashWithExpire<T>(hashMap: string, key: string, value: T, seconds: number): Promise<T> {
 
         let multi = this.redis.multi();
         multi.hset(hashMap, key, JSON.stringify(value));
@@ -291,6 +291,25 @@ export class RedisProvider {
         return value;
 
 
+    }
+
+    public async getHashAndDel<T>(hash: string, key: string,): Promise<T> {
+
+        let multi = this.redis.multi();
+        multi.hget(hash, key);
+        multi.hdel(hash, key);
+
+        let result = await multi.exec();
+
+        let resultGet = result[0][1];
+
+        if (_.isNull(resultGet)) {
+            return null;
+        }
+
+        let value = JSON.parse(resultGet);
+
+        return value;
     }
 
 

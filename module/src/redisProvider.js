@@ -179,6 +179,18 @@ let RedisProvider = class RedisProvider {
         let value = JSON.parse(resultGet);
         return value;
     }
+    async getHashAndDel(hash, key) {
+        let multi = this.redis.multi();
+        multi.hget(hash, key);
+        multi.hdel(hash, key);
+        let result = await multi.exec();
+        let resultGet = result[0][1];
+        if (_.isNull(resultGet)) {
+            return null;
+        }
+        let value = JSON.parse(resultGet);
+        return value;
+    }
     async lock(key, seconds, updateLockTime = false) {
         let result = await this.runScript("lock", [key], [seconds, updateLockTime], false);
         return !!result;
