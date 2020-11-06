@@ -1,8 +1,8 @@
 "use strict";
-import {define, factory, IFactory, inject, singleton} from 'appolo'
+import {define, factory, IFactory, inject, singleton} from '@appolo/inject'
 import {IOptions} from "../IOptions";
 import * as url from "url";
-import {Objects} from "appolo-utils";
+import {Objects} from "@appolo/utils";
 import Redis = require("ioredis");
 import {ScriptsManager} from "./scriptsManager";
 

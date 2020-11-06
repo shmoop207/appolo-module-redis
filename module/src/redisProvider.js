@@ -4,7 +4,7 @@ exports.RedisProvider = void 0;
 const tslib_1 = require("tslib");
 const _ = require("lodash");
 const Q = require("bluebird");
-const appolo_1 = require("appolo");
+const inject_1 = require("@appolo/inject");
 let RedisProvider = class RedisProvider {
     get redis() {
         return this.redisClientFactory.getClient();
@@ -215,11 +215,11 @@ let RedisProvider = class RedisProvider {
     }
 };
 tslib_1.__decorate([
-    appolo_1.inject()
+    inject_1.inject()
 ], RedisProvider.prototype, "redisClientFactory", void 0);
 RedisProvider = tslib_1.__decorate([
-    appolo_1.define(),
-    appolo_1.singleton()
+    inject_1.define(),
+    inject_1.singleton()
 ], RedisProvider);
 exports.RedisProvider = RedisProvider;
 //# sourceMappingURL=redisProvider.js.map

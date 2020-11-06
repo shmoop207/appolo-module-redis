@@ -1,5 +1,5 @@
 "use strict";
-import {define, inject, singleton} from 'appolo'
+import {define, inject, singleton} from '@appolo/inject'
 import {IOptions, IScript} from "../IOptions";
 import Redis = require("ioredis");
 import Q = require("bluebird");

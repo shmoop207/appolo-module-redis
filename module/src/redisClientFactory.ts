@@ -1,4 +1,4 @@
-import {define, inject, singleton} from "appolo/index";
+import {define, inject, singleton} from "@appolo/inject";
 import {IOptions, IScript} from "../IOptions";
 import Redis = require("ioredis");
 

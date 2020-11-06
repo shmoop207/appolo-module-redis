@@ -1,6 +1,7 @@
-import {App, createApp, Util} from 'appolo'
+import {App, createApp} from '@appolo/core'
 import {RedisModule} from "../index";
 import {RedisProvider} from "../module/src/redisProvider";
+import {Util} from "@appolo/utils";
 import chai = require('chai');
 import sinonChai = require("sinon-chai");
 import show = Mocha.reporters.Base.cursor.show;
@@ -24,7 +25,7 @@ describe("redis module Spec", function () {
 
         app = createApp({root: __dirname, environment: "production", port: 8181});
 
-        await app.module(new RedisModule({connection: process.env.REDIS, fallbackConnections: [process.env.REDIS]}));
+        await app.module.use(RedisModule.for({connection: process.env.REDIS, fallbackConnections: [process.env.REDIS]}));
 
         await app.launch();
 
@@ -145,7 +146,7 @@ describe("redis module Spec", function () {
 
         let test = await redisProvider.redis.quit();
 
-        await Util.delay(100);
+        await Util.promises.delay(100);
 
         await redisProvider.setWithExpire("redis_test", 1, 10000);
 

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisClientFactory = void 0;
 const tslib_1 = require("tslib");
-const index_1 = require("appolo/index");
+const inject_1 = require("@appolo/inject");
 let RedisClientFactory = class RedisClientFactory {
     getClient() {
         let client = this.redisClients[0];
@@ -15,14 +15,14 @@ let RedisClientFactory = class RedisClientFactory {
     }
 };
 tslib_1.__decorate([
-    index_1.inject()
+    inject_1.inject()
 ], RedisClientFactory.prototype, "moduleOptions", void 0);
 tslib_1.__decorate([
-    index_1.inject()
+    inject_1.inject()
 ], RedisClientFactory.prototype, "redisClients", void 0);
 RedisClientFactory = tslib_1.__decorate([
-    index_1.define(),
-    index_1.singleton()
+    inject_1.define(),
+    inject_1.singleton()
 ], RedisClientFactory);
 exports.RedisClientFactory = RedisClientFactory;
 //# sourceMappingURL=redisClientFactory.js.map

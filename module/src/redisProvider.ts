@@ -1,7 +1,7 @@
 import    _ = require('lodash');
 import Redis = require("ioredis");
 import Q = require("bluebird");
-import {define, inject, singleton} from 'appolo'
+import {define, inject, singleton} from '@appolo/inject'
 import {RedisClientFactory} from "./redisClientFactory";
 
 @define()

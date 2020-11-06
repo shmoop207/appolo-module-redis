@@ -1,4 +1,3 @@
-import {IModuleOptions} from 'appolo';
 import redis = require("ioredis");
 
 
@@ -9,7 +8,7 @@ export interface IScript {
     args?: number
 }
 
-export interface IOptions extends IModuleOptions {
+export interface IOptions  {
     id?: string;
     connection: string
     fallbackConnections?: string[]

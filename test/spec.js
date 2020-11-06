@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const appolo_1 = require("appolo");
+const core_1 = require("@appolo/core");
 const index_1 = require("../index");
+const utils_1 = require("@appolo/utils");
 const chai = require("chai");
 const sinonChai = require("sinon-chai");
 require('chai').should();
@@ -14,8 +15,8 @@ describe("redis module Spec", function () {
         throw new Error(`please define process.env.REDIS`);
     }
     beforeEach(async () => {
-        app = appolo_1.createApp({ root: __dirname, environment: "production", port: 8181 });
-        await app.module(new index_1.RedisModule({ connection: process.env.REDIS, fallbackConnections: [process.env.REDIS] }));
+        app = core_1.createApp({ root: __dirname, environment: "production", port: 8181 });
+        await app.module.use(index_1.RedisModule.for({ connection: process.env.REDIS, fallbackConnections: [process.env.REDIS] }));
         await app.launch();
         redisProvider = app.injector.get("redisProvider");
     });
@@ -89,7 +90,7 @@ describe("redis module Spec", function () {
     });
     it("should load cache expire lua with fallback", async () => {
         let test = await redisProvider.redis.quit();
-        await appolo_1.Util.delay(100);
+        await utils_1.Util.promises.delay(100);
         await redisProvider.setWithExpire("redis_test", 1, 10000);
         const result = await redisProvider.getByExpire("redis_test", 2);
         result.value.should.be.eq(1);
