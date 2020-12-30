@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScriptsManager = void 0;
 const tslib_1 = require("tslib");
 const inject_1 = require("@appolo/inject");
-const Q = require("bluebird");
+const utils_1 = require("@appolo/utils");
 const path = require("path");
 const fs = require("fs");
 let ScriptsManager = class ScriptsManager {
@@ -16,7 +16,7 @@ let ScriptsManager = class ScriptsManager {
     }
     async load(clients) {
         let scripts = (this.moduleOptions.scripts || []).concat(this.Scripts);
-        await Q.map(scripts, async (script) => {
+        await utils_1.Promises.map(scripts, async (script) => {
             if (!script.lua && !script.path) {
                 throw new Error(`path or lua must be defined for script name ${name}`);
             }
@@ -40,7 +40,7 @@ let ScriptsManager = class ScriptsManager {
         }
     }
     _loadPath(file) {
-        return Q.fromCallback(c => fs.readFile(path.resolve(process.cwd(), file), { encoding: "utf8" }, c));
+        return utils_1.Promises.fromCallback(c => fs.readFile(path.resolve(process.cwd(), file), { encoding: "utf8" }, c));
     }
 };
 tslib_1.__decorate([

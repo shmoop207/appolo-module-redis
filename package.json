@@ -1,6 +1,6 @@
 {
   "name": "@appolo/redis",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "description": "appolo redis module",
   "keywords": [
     "redis",
@@ -8,9 +8,8 @@
   ],
   "main": "index.js",
   "dependencies": {
-    "@appolo/core": "^8.0.5",
-    "@appolo/utils": "^8.0.4",
-    "bluebird": "^3.7.2",
+    "@appolo/engine": "^8.0.19",
+    "@appolo/utils": "^8.0.7",
     "ioredis": "^4.19.2",
     "lodash": "^4.17.20"
   },
@@ -21,7 +20,6 @@
     "test": "mocha test --timeout 5000 --exit"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.33",
     "@types/chai": "^4.2.14",
     "@types/ioredis": "^4.17.7",
     "@types/lodash": "^4.14.165",

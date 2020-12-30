@@ -1,7 +1,7 @@
 import    _ = require('lodash');
 import Redis = require("ioredis");
-import Q = require("bluebird");
 import {define, inject, singleton} from '@appolo/inject'
+import {Promises} from '@appolo/utils'
 import {RedisClientFactory} from "./redisClientFactory";
 
 @define()
@@ -151,7 +151,7 @@ export class RedisProvider {
 
         let keys = await this.scan(pattern, count);
 
-        await Q.map(keys, key => this.del(key), {concurrency: count});
+        await Promises.map(keys, key => this.del(key), {concurrency: count});
     }
 
     public async setWithExpire<T>(key: string, value: T, seconds: number): Promise<T> {
@@ -177,7 +177,7 @@ export class RedisProvider {
 
         const keys = await this._scanRecursive(pattern, count, 0, []);
 
-        let results = await Q.map(keys, key => this.get<T>(key), {concurrency: count});
+        let results = await Promises.map(keys, key => this.get<T>(key), {concurrency: count});
 
         return results;
     }
@@ -188,7 +188,7 @@ export class RedisProvider {
 
         let dto: { [index: string]: T } = {};
 
-        let results = await Q.map(keys, async (key: string) => {
+        let results = await Promises.map(keys, async (key: string) => {
             let value = await this.get<T>(key);
             dto[key] = value;
         }, {concurrency: count});

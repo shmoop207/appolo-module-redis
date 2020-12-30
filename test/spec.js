@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const core_1 = require("@appolo/core");
+const engine_1 = require("@appolo/engine");
 const index_1 = require("../index");
 const utils_1 = require("@appolo/utils");
 const chai = require("chai");
@@ -15,7 +15,7 @@ describe("redis module Spec", function () {
         throw new Error(`please define process.env.REDIS`);
     }
     beforeEach(async () => {
-        app = core_1.createApp({ root: __dirname, environment: "production", port: 8181 });
+        app = engine_1.createApp({ root: __dirname, environment: "production" });
         await app.module.use(index_1.RedisModule.for({ connection: process.env.REDIS, fallbackConnections: [process.env.REDIS] }));
         await app.launch();
         redisProvider = app.injector.get("redisProvider");

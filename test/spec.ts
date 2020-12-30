@@ -1,4 +1,4 @@
-import {App, createApp} from '@appolo/core'
+import {App, createApp} from '@appolo/engine'
 import {RedisModule} from "../index";
 import {RedisProvider} from "../module/src/redisProvider";
 import {Util} from "@appolo/utils";
@@ -23,7 +23,7 @@ describe("redis module Spec", function () {
 
     beforeEach(async () => {
 
-        app = createApp({root: __dirname, environment: "production", port: 8181});
+        app = createApp({root: __dirname, environment: "production"});
 
         await app.module.use(RedisModule.for({connection: process.env.REDIS, fallbackConnections: [process.env.REDIS]}));
 

@@ -1,8 +1,8 @@
 "use strict";
 import {define, inject, singleton} from '@appolo/inject'
 import {IOptions, IScript} from "../IOptions";
+import {Promises} from "@appolo/utils";
 import Redis = require("ioredis");
-import Q = require("bluebird");
 import path = require("path");
 import fs = require("fs");
 import {RedisClientFactory} from "./redisClientFactory";
@@ -23,7 +23,7 @@ export class ScriptsManager {
 
         let scripts = (this.moduleOptions.scripts || []).concat(this.Scripts);
 
-        await Q.map(scripts, async script => {
+        await Promises.map(scripts, async script => {
 
             if (!script.lua && !script.path) {
                 throw new Error(`path or lua must be defined for script name ${name}`);
@@ -57,7 +57,7 @@ export class ScriptsManager {
     }
 
     private _loadPath(file: string): PromiseLike<string> {
-        return Q.fromCallback<string>(c => fs.readFile(path.resolve(process.cwd(), file), {encoding: "utf8"}, c));
+        return Promises.fromCallback<string>(c => fs.readFile(path.resolve(process.cwd(), file), {encoding: "utf8"}, c));
     }
 
 }

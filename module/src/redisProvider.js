@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisProvider = void 0;
 const tslib_1 = require("tslib");
 const _ = require("lodash");
-const Q = require("bluebird");
 const inject_1 = require("@appolo/inject");
+const utils_1 = require("@appolo/utils");
 let RedisProvider = class RedisProvider {
     get redis() {
         return this.redisClientFactory.getClient();
@@ -92,7 +92,7 @@ let RedisProvider = class RedisProvider {
     }
     async delPattern(pattern, count = 1000) {
         let keys = await this.scan(pattern, count);
-        await Q.map(keys, key => this.del(key), { concurrency: count });
+        await utils_1.Promises.map(keys, key => this.del(key), { concurrency: count });
     }
     async setWithExpire(key, value, seconds) {
         await this.redis.setex(key, seconds, JSON.stringify(value));
@@ -107,13 +107,13 @@ let RedisProvider = class RedisProvider {
     }
     async scanValues(pattern = '*', count = 1000) {
         const keys = await this._scanRecursive(pattern, count, 0, []);
-        let results = await Q.map(keys, key => this.get(key), { concurrency: count });
+        let results = await utils_1.Promises.map(keys, key => this.get(key), { concurrency: count });
         return results;
     }
     async scanKeysValues(pattern = '*', count = 1000) {
         const keys = await this._scanRecursive(pattern, count, 0, []);
         let dto = {};
-        let results = await Q.map(keys, async (key) => {
+        let results = await utils_1.Promises.map(keys, async (key) => {
             let value = await this.get(key);
             dto[key] = value;
         }, { concurrency: count });

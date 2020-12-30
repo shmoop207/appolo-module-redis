@@ -5,8 +5,6 @@ import {RedisProvider} from "./src/redisProvider";
 @module()
 export class RedisModule extends Module<IOptions> {
 
-
-
     protected readonly Defaults: Partial<IOptions> = {id: "redisProvider"};
 
     public get exports() {
