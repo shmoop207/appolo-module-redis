@@ -8,7 +8,7 @@
   ],
   "main": "index.js",
   "dependencies": {
-    "@appolo/engine": "^8.0.19",
+    "@appolo/engine": "^8.0.22",
     "@appolo/utils": "^8.0.7",
     "ioredis": "^4.19.2",
     "lodash": "^4.17.20"
