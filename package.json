@@ -11,7 +11,7 @@
     "@appolo/engine": "^8.0.19",
     "@appolo/utils": "^8.0.7",
     "ioredis": "^4.19.2",
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.21"
   },
   "publishConfig": {
     "access": "public"
