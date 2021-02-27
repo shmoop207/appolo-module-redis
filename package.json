@@ -10,7 +10,7 @@
   "dependencies": {
     "@appolo/engine": "^8.0.19",
     "@appolo/utils": "^8.0.7",
-    "ioredis": "^4.19.2",
+    "ioredis": "^4.20.0",
     "lodash": "^4.17.20"
   },
   "publishConfig": {
