@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisProvider = void 0;
 const tslib_1 = require("tslib");
-const _ = require("lodash");
 const inject_1 = require("@appolo/inject");
 const utils_1 = require("@appolo/utils");
 let RedisProvider = class RedisProvider {
@@ -11,7 +10,7 @@ let RedisProvider = class RedisProvider {
     }
     async get(key) {
         let result = await this.redis.get(key);
-        if (_.isNull(result)) {
+        if (result === null) {
             return null;
         }
         let value = JSON.parse(result);
@@ -68,7 +67,7 @@ let RedisProvider = class RedisProvider {
     }
     async getHash(hashMap, key) {
         let result = await this.redis.hget(hashMap, key);
-        if (_.isNull(result)) {
+        if (result === null) {
             return null;
         }
         let value = JSON.parse(result);
@@ -76,10 +75,12 @@ let RedisProvider = class RedisProvider {
     }
     async getMultiHash(hKey, keys) {
         let values = await this.redis.hmget(hKey, ...keys);
-        return _.map(values, value => JSON.parse(value));
+        return utils_1.Arrays.map(values, value => JSON.parse(value));
     }
     async setMultiHash(hKey, keys, values) {
-        let data = _.flatten(_.zip(keys, _.map(values, value => JSON.stringify(value))));
+        let arr = utils_1.Arrays.map(values, value => JSON.stringify(value));
+        let zip = utils_1.Arrays.zip(keys, arr);
+        let data = utils_1.Arrays.flat(zip);
         if (data.length) {
             await this.redis.hmset(hKey, ...data);
         }
@@ -173,7 +174,7 @@ let RedisProvider = class RedisProvider {
         multi.del(key);
         let result = await multi.exec();
         let resultGet = result[0][1];
-        if (_.isNull(resultGet)) {
+        if (resultGet === null) {
             return null;
         }
         let value = JSON.parse(resultGet);
@@ -185,32 +186,55 @@ let RedisProvider = class RedisProvider {
         multi.hdel(hash, key);
         let result = await multi.exec();
         let resultGet = result[0][1];
-        if (_.isNull(resultGet)) {
+        if (resultGet === null) {
             return null;
         }
         let value = JSON.parse(resultGet);
         return value;
     }
     async lock(key, seconds, updateLockTime = false) {
-        let result = await this.runScript("lock", [key], [seconds, updateLockTime], false);
+        let result = await this.lockMs(key, seconds * 1000, updateLockTime);
         return !!result;
+    }
+    async lockMs(key, ttl, updateLockTime = false) {
+        let result = await this.runScript("lock", [key], [ttl, updateLockTime], false);
+        return !!result;
+    }
+    async waitForLock(params) {
+        let { key, ttl, retryCount = 10, retryDelay = 1000, retryJitter = 200 } = params;
+        let fn = async () => {
+            let isLocked = await this.lockMs(key, ttl);
+            if (isLocked) {
+                throw new Error("failed to get lock");
+            }
+        };
+        await utils_1.Promises.create(fn)
+            .retry({ retires: retryCount, linear: retryDelay, random: retryJitter })
+            .run();
+    }
+    async extendLock(key, ttl) {
+        let result = await utils_1.Promises.create(() => this.lockMs(key, ttl, true))
+            .retry(3)
+            .run();
     }
     async isLocked(key) {
         let result = await this.get(key);
         return !!result;
     }
     async unlock(key) {
-        let result = await this.del(key);
+        await utils_1.Promises.create(() => this.del(key))
+            .retry(3)
+            .run();
     }
     async runScript(name, keys, values, parse = true) {
         if (!this.redis[name]) {
             throw new Error(`failed to find script ${name}`);
         }
         let value = await this.redis[name](...keys, ...values);
-        if (_.isNull(value)) {
+        if (value === null) {
             return null;
         }
-        value = (parse && _.isString(value)) ? JSON.parse(value) : value;
+        value = (parse && utils_1.Strings.isString(value)) ? JSON.parse(value) : value;
         return value;
     }
 };

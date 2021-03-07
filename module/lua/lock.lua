@@ -7,12 +7,12 @@ local value = redis.call('GET', hash)
 
 if (value) then
     if(update) then
-        redis.call('EXPIRE', hash, expire)
+        redis.call('PEXPIRE', hash, expire)
     end
     return 1
 else
     redis.call('SET', hash, 1)
-    redis.call('EXPIRE', hash, expire)
+    redis.call('PEXPIRE', hash, expire)
     return 0
 end
 

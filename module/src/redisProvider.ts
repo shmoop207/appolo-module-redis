@@ -1,7 +1,6 @@
-import    _ = require('lodash');
 import Redis = require("ioredis");
 import {define, inject, singleton} from '@appolo/inject'
-import {Promises} from '@appolo/utils'
+import {Promises, Arrays, Strings} from '@appolo/utils'
 import {RedisClientFactory} from "./redisClientFactory";
 
 @define()
@@ -17,7 +16,7 @@ export class RedisProvider {
 
         let result = await this.redis.get(key);
 
-        if (_.isNull(result)) {
+        if (result === null) {
             return null;
         }
 
@@ -112,7 +111,7 @@ export class RedisProvider {
 
         let result = await this.redis.hget(hashMap, key);
 
-        if (_.isNull(result)) {
+        if (result === null) {
             return null;
         }
 
@@ -125,12 +124,14 @@ export class RedisProvider {
 
         let values = await this.redis.hmget(hKey, ...keys);
 
-        return _.map<string, T>(values, value => JSON.parse(value));
+        return Arrays.map<string, T>(values, value => JSON.parse(value));
     }
 
     public async setMultiHash<T>(hKey: string, keys: string[], values: T[]): Promise<void> {
 
-        let data = _.flatten(_.zip(keys, _.map(values, value => JSON.stringify(value))));
+        let arr: any = Arrays.map(values, value => JSON.stringify(value));
+        let zip = Arrays.zip(keys, arr);
+        let data: any[] = Arrays.flat(zip);
 
         if (data.length) {
             await this.redis.hmset(hKey, ...data);
@@ -282,7 +283,7 @@ export class RedisProvider {
 
         let resultGet = result[0][1];
 
-        if (_.isNull(resultGet)) {
+        if (resultGet === null) {
             return null;
         }
 
@@ -303,7 +304,7 @@ export class RedisProvider {
 
         let resultGet = result[0][1];
 
-        if (_.isNull(resultGet)) {
+        if (resultGet === null) {
             return null;
         }
 
@@ -314,9 +315,39 @@ export class RedisProvider {
 
 
     public async lock(key: string, seconds: number, updateLockTime: boolean = false): Promise<boolean> {
-        let result = await this.runScript<number>("lock", [key], [seconds, updateLockTime], false);
+        let result = await this.lockMs(key, seconds * 1000, updateLockTime);
 
         return !!result;
+    }
+
+    public async lockMs(key: string, ttl: number, updateLockTime: boolean = false): Promise<boolean> {
+        let result = await this.runScript<number>("lock", [key], [ttl, updateLockTime], false);
+
+        return !!result;
+    }
+
+    public async waitForLock(params: { key: string, ttl: number, retryCount?: number, retryDelay?: number, retryJitter?: number }): Promise<void> {
+
+        let {key, ttl, retryCount = 10, retryDelay = 1000, retryJitter = 200} = params;
+
+        let fn = async () => {
+            let isLocked = await this.lockMs(key, ttl);
+
+            if (isLocked) {
+                throw new Error("failed to get lock");
+            }
+        }
+
+        await Promises.create(fn)
+            .retry({retires: retryCount, linear: retryDelay, random: retryJitter})
+            .run();
+
+    }
+
+    public async extendLock(key: string, ttl: number): Promise<void> {
+        let result = await Promises.create(() => this.lockMs(key, ttl, true))
+            .retry(3)
+            .run();
     }
 
     public async isLocked(key: string): Promise<boolean> {
@@ -326,7 +357,9 @@ export class RedisProvider {
     }
 
     public async unlock(key: string): Promise<void> {
-        let result = await this.del(key);
+        await Promises.create(() => this.del(key))
+            .retry(3)
+            .run();
     }
 
 
@@ -339,11 +372,11 @@ export class RedisProvider {
 
         let value = await this.redis[name](...keys, ...values);
 
-        if (_.isNull(value)) {
+        if (value === null) {
             return null;
         }
 
-        value = (parse && _.isString(value)) ? JSON.parse(value) : value;
+        value = (parse && Strings.isString(value)) ? JSON.parse(value as string) : value;
 
         return value;
     }
