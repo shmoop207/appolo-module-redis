@@ -226,6 +226,41 @@ let RedisProvider = class RedisProvider {
             .retry(3)
             .run();
     }
+    async listPush(key, value) {
+        let length = await this.redis.rpush(key, JSON.stringify(value));
+        return length;
+    }
+    async listPop(key) {
+        let result = await this.redis.rpop(key);
+        if (result === null) {
+            return null;
+        }
+        let value = JSON.parse(result);
+        return value;
+    }
+    async listUnshift(key, value) {
+        let length = await this.redis.lpush(key, JSON.stringify(value));
+        return length;
+    }
+    async listShift(key) {
+        let result = await this.redis.lpop(key);
+        if (result === null) {
+            return null;
+        }
+        let value = JSON.parse(result);
+        return value;
+    }
+    async listRange(key, start = 0, end = 0) {
+        let values = await this.redis.lrange(key, start, end);
+        return utils_1.Arrays.map(values, value => JSON.parse(value));
+    }
+    async listTrim(key, start = 0, end = 0) {
+        await this.redis.ltrim(key, start, end);
+    }
+    async listLen(key) {
+        let value = await this.redis.llen(key);
+        return value;
+    }
     async runScript(name, keys, values, parse = true) {
         if (!this.redis[name]) {
             throw new Error(`failed to find script ${name}`);

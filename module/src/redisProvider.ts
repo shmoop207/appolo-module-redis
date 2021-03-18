@@ -363,6 +363,60 @@ export class RedisProvider {
     }
 
 
+    public async listPush<T>(key: string, value: T): Promise<number> {
+        let length = await this.redis.rpush(key, JSON.stringify(value))
+
+        return length;
+    }
+
+    public async listPop<T>(key: string): Promise<T> {
+        let result = await this.redis.rpop(key);
+
+        if (result === null) {
+            return null;
+        }
+
+        let value = JSON.parse(result);
+
+        return value
+
+    }
+
+    public async listUnshift<T>(key: string, value: T): Promise<number> {
+        let length = await this.redis.lpush(key, JSON.stringify(value))
+
+        return length;
+    }
+
+    public async listShift<T>(key: string): Promise<T> {
+        let result = await this.redis.lpop(key);
+
+        if (result === null) {
+            return null;
+        }
+
+        let value = JSON.parse(result);
+
+        return value
+    }
+
+    public async listRange<T>(key: string, start: number = 0, end: number = 0): Promise<T[]> {
+        let values = await this.redis.lrange(key, start, end);
+
+        return Arrays.map<string, T>(values, value => JSON.parse(value));
+
+    }
+
+    public async listTrim<T>(key: string, start: number = 0, end: number = 0): Promise<void> {
+        await this.redis.ltrim(key, start, end);
+    }
+
+    public async listLen<T>(key: string): Promise<number> {
+        let value = await this.redis.llen(key);
+
+        return value;
+    }
+
     public async runScript<T>(name: string, keys: string[], values: any[], parse: boolean = true): Promise<T> {
 
 
