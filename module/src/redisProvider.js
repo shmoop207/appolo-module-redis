@@ -197,7 +197,11 @@ let RedisProvider = class RedisProvider {
         return !!result;
     }
     async lockMs(key, ttl, updateLockTime = false) {
-        let result = await this.runScript("lock", [key], [ttl, updateLockTime], false);
+        let values = [ttl];
+        if (updateLockTime) {
+            values.push(true);
+        }
+        let result = await this.runScript("lock", [key], values, false);
         return !!result;
     }
     async waitForLock(params) {

@@ -321,7 +321,14 @@ export class RedisProvider {
     }
 
     public async lockMs(key: string, ttl: number, updateLockTime: boolean = false): Promise<boolean> {
-        let result = await this.runScript<number>("lock", [key], [ttl, updateLockTime], false);
+
+        let values: any[] = [ttl];
+
+        if (updateLockTime) {
+            values.push(true);
+        }
+
+        let result = await this.runScript<number>("lock", [key], values, false);
 
         return !!result;
     }
