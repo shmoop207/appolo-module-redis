@@ -1,4 +1,4 @@
-import    _ = require('lodash');
+import _ = require('lodash');
 import Redis = require("ioredis");
 import Q = require("bluebird");
 import {define, inject, singleton} from 'appolo'
@@ -314,9 +314,39 @@ export class RedisProvider {
 
 
     public async lock(key: string, seconds: number, updateLockTime: boolean = false): Promise<boolean> {
-        let result = await this.runScript<number>("lock", [key], [seconds, updateLockTime], false);
+        let result = await this.lockMs(key, seconds * 1000, updateLockTime);
 
         return !!result;
+    }
+
+    public async lockMs(key: string, ttl: number, updateLockTime: boolean = false): Promise<boolean> {
+
+        let values: any[] = [ttl];
+
+        if (updateLockTime) {
+            values.push(true);
+        }
+
+        let result = await this.runScript<number>("lock", [key], values, false);
+
+        return !!result;
+    }
+
+    public async waitForLock(params: { key: string, ttl: number, retryCount?: number, retryDelay?: number, retryJitter?: number }): Promise<void> {
+
+        let {key, ttl, retryCount = 10, retryDelay = 1000, retryJitter = 200} = params;
+
+        let isLocked = await this.lockMs(key, ttl);
+
+        if (isLocked) {
+            throw new Error("failed to get lock");
+        }
+
+    }
+
+    public async extendLock(key: string, ttl: number): Promise<void> {
+        await this.lockMs(key, ttl, true)
+
     }
 
     public async isLocked(key: string): Promise<boolean> {
@@ -326,7 +356,61 @@ export class RedisProvider {
     }
 
     public async unlock(key: string): Promise<void> {
-        let result = await this.del(key);
+        await this.del(key);
+    }
+
+    public async listPush<T>(key: string, value: T): Promise<number> {
+        let length = await this.redis.rpush(key, JSON.stringify(value))
+
+        return length;
+    }
+
+    public async listPop<T>(key: string): Promise<T> {
+        let result = await this.redis.rpop(key);
+
+        if (result === null) {
+            return null;
+        }
+
+        let value = JSON.parse(result);
+
+        return value
+
+    }
+
+    public async listShift<T>(key: string): Promise<T> {
+        let result = await this.redis.lpop(key);
+
+        if (result === null) {
+            return null;
+        }
+
+        let value = JSON.parse(result);
+
+        return value
+    }
+
+    public async listUnshift<T>(key: string, value: T): Promise<number> {
+        let length = await this.redis.lpush(key, JSON.stringify(value))
+
+        return length;
+    }
+
+    public async listRange<T>(key: string, start: number = 0, end: number = 0): Promise<T[]> {
+        let values = await this.redis.lrange(key, start, end);
+
+        return _.map<string, T>(values, value => JSON.parse(value));
+
+    }
+
+    public async listTrim<T>(key: string, start: number = 0, end: number = 0): Promise<void> {
+        await this.redis.ltrim(key, start, end);
+    }
+
+    public async listLen<T>(key: string): Promise<number> {
+        let value = await this.redis.llen(key);
+
+        return value;
     }
 
 

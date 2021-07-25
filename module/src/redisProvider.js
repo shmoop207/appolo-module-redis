@@ -192,15 +192,68 @@ let RedisProvider = class RedisProvider {
         return value;
     }
     async lock(key, seconds, updateLockTime = false) {
-        let result = await this.runScript("lock", [key], [seconds, updateLockTime], false);
+        let result = await this.lockMs(key, seconds * 1000, updateLockTime);
         return !!result;
+    }
+    async lockMs(key, ttl, updateLockTime = false) {
+        let values = [ttl];
+        if (updateLockTime) {
+            values.push(true);
+        }
+        let result = await this.runScript("lock", [key], values, false);
+        return !!result;
+    }
+    async waitForLock(params) {
+        let { key, ttl, retryCount = 10, retryDelay = 1000, retryJitter = 200 } = params;
+        let isLocked = await this.lockMs(key, ttl);
+        if (isLocked) {
+            throw new Error("failed to get lock");
+        }
+    }
+    async extendLock(key, ttl) {
+        await this.lockMs(key, ttl, true);
     }
     async isLocked(key) {
         let result = await this.get(key);
         return !!result;
     }
     async unlock(key) {
-        let result = await this.del(key);
+        await this.del(key);
+    }
+    async listPush(key, value) {
+        let length = await this.redis.rpush(key, JSON.stringify(value));
+        return length;
+    }
+    async listPop(key) {
+        let result = await this.redis.rpop(key);
+        if (result === null) {
+            return null;
+        }
+        let value = JSON.parse(result);
+        return value;
+    }
+    async listShift(key) {
+        let result = await this.redis.lpop(key);
+        if (result === null) {
+            return null;
+        }
+        let value = JSON.parse(result);
+        return value;
+    }
+    async listUnshift(key, value) {
+        let length = await this.redis.lpush(key, JSON.stringify(value));
+        return length;
+    }
+    async listRange(key, start = 0, end = 0) {
+        let values = await this.redis.lrange(key, start, end);
+        return _.map(values, value => JSON.parse(value));
+    }
+    async listTrim(key, start = 0, end = 0) {
+        await this.redis.ltrim(key, start, end);
+    }
+    async listLen(key) {
+        let value = await this.redis.llen(key);
+        return value;
     }
     async runScript(name, keys, values, parse = true) {
         if (!this.redis[name]) {
