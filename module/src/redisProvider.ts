@@ -269,7 +269,7 @@ export class RedisProvider {
 
         let result = await multi.exec();
 
-        return result[0][1]
+        return result[0][1] as number
 
     }
 
@@ -287,7 +287,7 @@ export class RedisProvider {
             return null;
         }
 
-        let value = JSON.parse(resultGet);
+        let value = JSON.parse(resultGet as string);
 
         return value;
 
@@ -308,7 +308,7 @@ export class RedisProvider {
             return null;
         }
 
-        let value = JSON.parse(resultGet);
+        let value = JSON.parse(resultGet as string);
 
         return value;
     }

@@ -3,20 +3,20 @@ import {define, factory, IFactory, inject, singleton} from '@appolo/inject'
 import {IOptions} from "../IOptions";
 import * as url from "url";
 import {Objects} from "@appolo/utils";
-import Redis = require("ioredis");
+import {default as Redis, RedisOptions} from "ioredis";
 import {ScriptsManager} from "./scriptsManager";
 
 @define()
 @singleton()
 @factory()
-export class RedisClients implements IFactory<Redis.Redis[]> {
+export class RedisClients implements IFactory<Redis[]> {
 
     @inject() protected moduleOptions: IOptions;
     @inject() protected scriptsManager: ScriptsManager;
 
     private readonly Defaults = {enableReadyCheck: true, lazyConnect: true, keepAlive: 1000};
 
-    public async get(): Promise<Redis.Redis[]> {
+    public async get(): Promise<Redis[]> {
         let fallback = this.moduleOptions.fallbackConnections;
 
         let connections = [this.moduleOptions.connection]
@@ -29,20 +29,23 @@ export class RedisClients implements IFactory<Redis.Redis[]> {
         return clients
     }
 
-    public async create(connection: string): Promise<Redis.Redis> {
+    public async create(connection: string): Promise<Redis> {
 
         try {
 
-            let urlParams = url.parse(connection);
+            let conn = new URL(connection);
 
-            let opts = Objects.defaults(this.moduleOptions.opts || {}, this.Defaults);
+            let opts:RedisOptions = Objects.defaults({},this.moduleOptions.opts || {}, this.Defaults);
             opts.lazyConnect = true;
-
-            if (urlParams.protocol == "rediss:") {
+            if (conn.protocol == "rediss:") {
                 (opts as any).tls = true;
             }
 
-            let redis = new Redis(this.moduleOptions.connection, opts);
+            opts.host = conn.hostname;
+            opts.port = parseInt(conn.port);
+            opts.password = conn.password;
+
+            let redis = new Redis(opts);
 
             await redis.connect();
 

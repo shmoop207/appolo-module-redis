@@ -44,11 +44,11 @@ let ScriptsManager = class ScriptsManager {
     }
 };
 tslib_1.__decorate([
-    inject_1.inject()
+    (0, inject_1.inject)()
 ], ScriptsManager.prototype, "moduleOptions", void 0);
 ScriptsManager = tslib_1.__decorate([
-    inject_1.define(),
-    inject_1.singleton()
+    (0, inject_1.define)(),
+    (0, inject_1.singleton)()
 ], ScriptsManager);
 exports.ScriptsManager = ScriptsManager;
 //# sourceMappingURL=scriptsManager.js.map

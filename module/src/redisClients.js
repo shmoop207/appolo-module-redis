@@ -3,9 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisClients = void 0;
 const tslib_1 = require("tslib");
 const inject_1 = require("@appolo/inject");
-const url = require("url");
 const utils_1 = require("@appolo/utils");
-const Redis = require("ioredis");
+const ioredis_1 = require("ioredis");
 let RedisClients = class RedisClients {
     constructor() {
         this.Defaults = { enableReadyCheck: true, lazyConnect: true, keepAlive: 1000 };
@@ -20,13 +19,16 @@ let RedisClients = class RedisClients {
     }
     async create(connection) {
         try {
-            let urlParams = url.parse(connection);
-            let opts = utils_1.Objects.defaults(this.moduleOptions.opts || {}, this.Defaults);
+            let conn = new URL(connection);
+            let opts = utils_1.Objects.defaults({}, this.moduleOptions.opts || {}, this.Defaults);
             opts.lazyConnect = true;
-            if (urlParams.protocol == "rediss:") {
+            if (conn.protocol == "rediss:") {
                 opts.tls = true;
             }
-            let redis = new Redis(this.moduleOptions.connection, opts);
+            opts.host = conn.hostname;
+            opts.port = parseInt(conn.port);
+            opts.password = conn.password;
+            let redis = new ioredis_1.default(opts);
             await redis.connect();
             return redis;
         }
@@ -36,15 +38,15 @@ let RedisClients = class RedisClients {
     }
 };
 tslib_1.__decorate([
-    inject_1.inject()
+    (0, inject_1.inject)()
 ], RedisClients.prototype, "moduleOptions", void 0);
 tslib_1.__decorate([
-    inject_1.inject()
+    (0, inject_1.inject)()
 ], RedisClients.prototype, "scriptsManager", void 0);
 RedisClients = tslib_1.__decorate([
-    inject_1.define(),
-    inject_1.singleton(),
-    inject_1.factory()
+    (0, inject_1.define)(),
+    (0, inject_1.singleton)(),
+    (0, inject_1.factory)()
 ], RedisClients);
 exports.RedisClients = RedisClients;
 //# sourceMappingURL=redisClients.js.map

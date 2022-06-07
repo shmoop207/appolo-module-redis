@@ -15,14 +15,14 @@ let RedisClientFactory = class RedisClientFactory {
     }
 };
 tslib_1.__decorate([
-    inject_1.inject()
+    (0, inject_1.inject)()
 ], RedisClientFactory.prototype, "moduleOptions", void 0);
 tslib_1.__decorate([
-    inject_1.inject()
+    (0, inject_1.inject)()
 ], RedisClientFactory.prototype, "redisClients", void 0);
 RedisClientFactory = tslib_1.__decorate([
-    inject_1.define(),
-    inject_1.singleton()
+    (0, inject_1.define)(),
+    (0, inject_1.singleton)()
 ], RedisClientFactory);
 exports.RedisClientFactory = RedisClientFactory;
 //# sourceMappingURL=redisClientFactory.js.map
