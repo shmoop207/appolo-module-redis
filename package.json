@@ -1,6 +1,6 @@
 {
   "name": "@appolo/redis",
-  "version": "8.0.6",
+  "version": "8.0.7",
   "description": "appolo redis module",
   "keywords": [
     "redis",
