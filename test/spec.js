@@ -67,6 +67,12 @@ describe("redis module Spec", function () {
         lock.should.not.be.ok;
         lock2.should.be.ok;
     });
+    it("should wait for lock", async () => {
+        await redisProvider.waitForLock({ key: "redis_lock_wait", ttl: 10000 });
+        let [err] = await utils_1.Promises.to(redisProvider.waitForLock({ key: "redis_lock_wait", ttl: 50, retryCount: 1 }));
+        err.should.be.ok;
+        err.message.should.be.eq("failed to get lock");
+    });
     it('should del by pattern', async () => {
         await redisProvider.set('haa1', { v: 1 });
         await redisProvider.set('haa2', { v: 2 });

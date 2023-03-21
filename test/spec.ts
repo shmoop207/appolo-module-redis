@@ -1,7 +1,7 @@
 import {App, createApp} from '@appolo/engine'
 import {RedisModule} from "../index";
 import {RedisProvider} from "../module/src/redisProvider";
-import {Util} from "@appolo/utils";
+import {Promises, Util} from "@appolo/utils";
 import chai = require('chai');
 import sinonChai = require("sinon-chai");
 import show = Mocha.reporters.Base.cursor.show;
@@ -104,6 +104,16 @@ describe("redis module Spec", function () {
 
         lock.should.not.be.ok;
         lock2.should.be.ok
+    });
+
+    it("should wait for lock", async () => {
+
+        await redisProvider.waitForLock({key:"redis_lock_wait",ttl:10000});
+        let [err] = await Promises.to( redisProvider.waitForLock({key:"redis_lock_wait",ttl:50,retryCount:1}));
+
+        err.should.be.ok;
+        err.message.should.be.eq("failed to get lock")
+
     });
 
 

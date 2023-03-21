@@ -10,7 +10,7 @@
   "dependencies": {
     "@appolo/engine": "^8.0.23",
     "@appolo/utils": "^8.0.16",
-    "ioredis": "^5.0.6"
+    "ioredis": "^5.3.1"
   },
   "publishConfig": {
     "access": "public"
