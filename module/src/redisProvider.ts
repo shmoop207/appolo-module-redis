@@ -79,7 +79,10 @@ export class RedisProvider {
         return output;
     }
 
-    public async getByExpire<T>(key: string, expire: number, refresh?: number): Promise<{ value: T, validExpire: boolean }> {
+    public async getByExpire<T>(key: string, expire: number, refresh?: number): Promise<{
+        value: T,
+        validExpire: boolean
+    }> {
 
         let result = await this.runScript<any>("get_by_expire", [key], [expire, refresh || (expire / 2)]);
 
@@ -210,7 +213,9 @@ export class RedisProvider {
         return accumulativeResults;
     }
 
-    public async scanHash<T>(key: string, pattern: string = '*', count: number = 1000): Promise<{ [index: string]: T }> {
+    public async scanHash<T>(key: string, pattern: string = '*', count: number = 1000): Promise<{
+        [index: string]: T
+    }> {
         const keysAndValues = await this._scanHashRecursive(key, pattern, count, 0, []);
 
         const output: { [index: string]: T } = {};
@@ -333,7 +338,13 @@ export class RedisProvider {
         return !!result;
     }
 
-    public async waitForLock(params: { key: string, ttl: number, retryCount?: number, retryDelay?: number, retryJitter?: number }): Promise<void> {
+    public async waitForLock(params: {
+        key: string,
+        ttl: number,
+        retryCount?: number,
+        retryDelay?: number,
+        retryJitter?: number
+    }): Promise<void> {
 
         let {key, ttl, retryCount = 10, retryDelay = 1000, retryJitter = 200} = params;
 
@@ -440,6 +451,31 @@ export class RedisProvider {
         value = (parse && Strings.isString(value)) ? JSON.parse(value as string) : value;
 
         return value;
+    }
+
+    public async addToSet<T extends string | number>(key: string, ...value: T[]): Promise<void> {
+
+        await this.redis.sadd(key, value);
+    }
+
+    public async removeFromSet<T extends string | number>(key: string, ...value: T[]): Promise<void> {
+        await this.redis.srem(key, value);
+    }
+
+    public async isExistsInSet<T>(params: {
+        key: string,
+        value: string,
+        isPartial?: boolean,
+        partialMinLen?: number
+    }): Promise<boolean> {
+        let {key, value, isPartial = false, partialMinLen = 3} = params;
+
+        let members: string[] = isPartial ? Strings.partialCombinations({value, minLen: partialMinLen}) : [value];
+
+        let result = await this.redis.smismember(key, members);
+
+        return (result || []).some(value => value === 1);
+
     }
 
 }

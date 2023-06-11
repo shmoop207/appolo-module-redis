@@ -276,6 +276,18 @@ let RedisProvider = class RedisProvider {
         value = (parse && utils_1.Strings.isString(value)) ? JSON.parse(value) : value;
         return value;
     }
+    async addToSet(key, ...value) {
+        await this.redis.sadd(key, value);
+    }
+    async removeFromSet(key, ...value) {
+        await this.redis.srem(key, value);
+    }
+    async isExistsInSet(params) {
+        let { key, value, isPartial = false, partialMinLen = 3 } = params;
+        let members = isPartial ? utils_1.Strings.partialCombinations({ value, minLen: partialMinLen }) : [value];
+        let result = await this.redis.smismember(key, members);
+        return (result || []).some(value => value === 1);
+    }
 };
 tslib_1.__decorate([
     (0, inject_1.inject)()

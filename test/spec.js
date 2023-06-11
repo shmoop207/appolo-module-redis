@@ -102,5 +102,16 @@ describe("redis module Spec", function () {
         result.value.should.be.eq(1);
         result.validExpire.should.be.ok;
     });
+    it.only("should exist in set", async () => {
+        await redisProvider.addToSet("redis_test_set", "aaa", "bbb", "ccc");
+        let result = await redisProvider.isExistsInSet({ key: "redis_test_set", value: "asdfghjklbbbqwert", isPartial: true, partialMinLen: 3 });
+        result.should.be.ok;
+        await redisProvider.removeFromSet("redis_test_set", "bbb");
+        result = await redisProvider.isExistsInSet({ key: "redis_test_set", value: "asdfghjklbbbqwert", isPartial: true, partialMinLen: 3 });
+        result.should.not.be.ok;
+        result = await redisProvider.isExistsInSet({ key: "redis_test_set", value: "aaa" });
+        result.should.be.ok;
+        await redisProvider.del("redis_test_set");
+    });
 });
 //# sourceMappingURL=spec.js.map
