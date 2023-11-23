@@ -61,7 +61,7 @@ let RedisProvider = class RedisProvider {
     async setHashWithExpire(hashMap, key, value, seconds) {
         let multi = this.redis.multi();
         multi.hset(hashMap, key, JSON.stringify(value));
-        multi.expire(key, seconds);
+        multi.expire(hashMap, seconds);
         await multi.exec();
         return value;
     }
