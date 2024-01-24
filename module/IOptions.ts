@@ -8,10 +8,13 @@ export interface IScript {
     args?: number
 }
 
-export interface IOptions  {
+export interface IOptions {
     id?: string;
     connection: string
     fallbackConnections?: string[]
     opts?: redis.RedisOptions
     scripts?: IScript[]
+    connectTimeout?: number,
+    connectOnError?: boolean
+    logErrors?: boolean
 }

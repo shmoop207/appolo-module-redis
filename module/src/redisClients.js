@@ -18,6 +18,7 @@ let RedisClients = class RedisClients {
         return clients;
     }
     async create(connection) {
+        let redis;
         try {
             let conn = new URL(connection);
             let opts = utils_1.Objects.defaults({}, this.moduleOptions.opts || {}, this.Defaults);
@@ -28,11 +29,21 @@ let RedisClients = class RedisClients {
             opts.host = conn.hostname;
             opts.port = parseInt(conn.port);
             opts.password = conn.password;
-            let redis = new ioredis_1.default(opts);
-            await redis.connect();
+            redis = new ioredis_1.default(opts);
+            redis.on("error", (e) => {
+                this.moduleOptions.logErrors && this.logger.error("redis error", { e, id: this.moduleOptions.id });
+            });
+            let promise = redis.connect();
+            if (this.moduleOptions.connectTimeout) {
+                promise = utils_1.Promises.timeout(promise, this.moduleOptions.connectTimeout);
+            }
+            await promise;
             return redis;
         }
         catch (e) {
+            if (redis && this.moduleOptions.connectOnError) {
+                return redis;
+            }
             throw e;
         }
     }
@@ -40,6 +51,9 @@ let RedisClients = class RedisClients {
 tslib_1.__decorate([
     (0, inject_1.inject)()
 ], RedisClients.prototype, "moduleOptions", void 0);
+tslib_1.__decorate([
+    (0, inject_1.inject)()
+], RedisClients.prototype, "logger", void 0);
 tslib_1.__decorate([
     (0, inject_1.inject)()
 ], RedisClients.prototype, "scriptsManager", void 0);

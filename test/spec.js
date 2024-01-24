@@ -16,7 +16,10 @@ describe("redis module Spec", function () {
     }
     beforeEach(async () => {
         app = (0, engine_1.createApp)({ root: __dirname, environment: "production" });
-        await app.module.use(index_1.RedisModule.for({ connection: process.env.REDIS, fallbackConnections: [process.env.REDIS] }));
+        await app.module.use(index_1.RedisModule.for({
+            connection: process.env.REDIS,
+            fallbackConnections: [process.env.REDIS]
+        }));
         await app.launch();
         redisProvider = app.injector.get("redisProvider");
     });
@@ -102,16 +105,53 @@ describe("redis module Spec", function () {
         result.value.should.be.eq(1);
         result.validExpire.should.be.ok;
     });
-    it.only("should exist in set", async () => {
+    it("should exist in set", async () => {
         await redisProvider.addToSet("redis_test_set", "aaa", "bbb", "ccc");
-        let result = await redisProvider.isExistsInSet({ key: "redis_test_set", value: "asdfghjklbbbqwert", isPartial: true, partialMinLen: 3 });
+        let result = await redisProvider.isExistsInSet({
+            key: "redis_test_set",
+            value: "asdfghjklbbbqwert",
+            isPartial: true,
+            partialMinLen: 3
+        });
         result.should.be.ok;
         await redisProvider.removeFromSet("redis_test_set", "bbb");
-        result = await redisProvider.isExistsInSet({ key: "redis_test_set", value: "asdfghjklbbbqwert", isPartial: true, partialMinLen: 3 });
+        result = await redisProvider.isExistsInSet({
+            key: "redis_test_set",
+            value: "asdfghjklbbbqwert",
+            isPartial: true,
+            partialMinLen: 3
+        });
         result.should.not.be.ok;
         result = await redisProvider.isExistsInSet({ key: "redis_test_set", value: "aaa" });
         result.should.be.ok;
         await redisProvider.del("redis_test_set");
+    });
+});
+describe("redis module connection error", function () {
+    if (!process.env.REDIS) {
+        throw new Error(`please define process.env.REDIS`);
+    }
+    beforeEach(async () => {
+        app = (0, engine_1.createApp)({ root: __dirname, environment: "production" });
+        await app.module.use(index_1.RedisModule.for({
+            connection: process.env.REDIS.replace("13836", "13838"),
+            connectOnError: true,
+            logErrors: true,
+            fallbackConnections: []
+        }));
+        await app.launch();
+        redisProvider = app.injector.get("redisProvider");
+    });
+    afterEach(async () => {
+        await app.reset();
+    });
+    it("should reconnect on error", async () => {
+        try {
+            await utils_1.Promises.timeout(redisProvider.get("redis_test_set"), 1000);
+        }
+        catch (e) {
+            e.message.should.contain("timeout");
+        }
     });
 });
 //# sourceMappingURL=spec.js.map

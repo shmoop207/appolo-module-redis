@@ -2,7 +2,8 @@
 import {define, factory, IFactory, inject, singleton} from '@appolo/inject'
 import {IOptions} from "../IOptions";
 import * as url from "url";
-import {Objects} from "@appolo/utils";
+import {Objects, Promises} from "@appolo/utils";
+import {ILogger} from "@appolo/logger";
 import {default as Redis, RedisOptions} from "ioredis";
 import {ScriptsManager} from "./scriptsManager";
 
@@ -12,6 +13,7 @@ import {ScriptsManager} from "./scriptsManager";
 export class RedisClients implements IFactory<Redis[]> {
 
     @inject() protected moduleOptions: IOptions;
+    @inject() protected logger: ILogger;
     @inject() protected scriptsManager: ScriptsManager;
 
     private readonly Defaults = {enableReadyCheck: true, lazyConnect: true, keepAlive: 1000};
@@ -30,12 +32,12 @@ export class RedisClients implements IFactory<Redis[]> {
     }
 
     public async create(connection: string): Promise<Redis> {
-
+        let redis: Redis;
         try {
 
             let conn = new URL(connection);
 
-            let opts:RedisOptions = Objects.defaults({},this.moduleOptions.opts || {}, this.Defaults);
+            let opts: RedisOptions = Objects.defaults({}, this.moduleOptions.opts || {}, this.Defaults);
             opts.lazyConnect = true;
             if (conn.protocol == "rediss:") {
                 (opts as any).tls = true;
@@ -45,12 +47,27 @@ export class RedisClients implements IFactory<Redis[]> {
             opts.port = parseInt(conn.port);
             opts.password = conn.password;
 
-            let redis = new Redis(opts);
+            redis = new Redis(opts);
 
-            await redis.connect();
+            redis.on("error", (e) => {
+                this.moduleOptions.logErrors && this.logger.error("redis error", {e, id: this.moduleOptions.id})
+            })
+
+            let promise = redis.connect()
+
+            if (this.moduleOptions.connectTimeout) {
+                promise = Promises.timeout(promise, this.moduleOptions.connectTimeout)
+            }
+
+            await promise
 
             return redis;
         } catch (e) {
+
+            if (redis && this.moduleOptions.connectOnError) {
+                return redis;
+            }
+
             throw e
         }
 

@@ -1,6 +1,6 @@
 {
   "name": "@appolo/redis",
-  "version": "8.0.9",
+  "version": "8.0.10",
   "description": "appolo redis module",
   "keywords": [
     "redis",
@@ -9,6 +9,7 @@
   "main": "index.js",
   "dependencies": {
     "@appolo/engine": "^8.0.23",
+    "@appolo/logger": "^8.1.2",
     "@appolo/utils": "^8.0.47",
     "ioredis": "^5.3.2"
   },

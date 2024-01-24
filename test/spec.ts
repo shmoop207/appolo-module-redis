@@ -25,7 +25,10 @@ describe("redis module Spec", function () {
 
         app = createApp({root: __dirname, environment: "production"});
 
-        await app.module.use(RedisModule.for({connection: process.env.REDIS, fallbackConnections: [process.env.REDIS]}));
+        await app.module.use(RedisModule.for({
+            connection: process.env.REDIS,
+            fallbackConnections: [process.env.REDIS]
+        }));
 
         await app.launch();
 
@@ -48,11 +51,11 @@ describe("redis module Spec", function () {
     it("should get and delete redis", async () => {
         await redisProvider.set("redis_test", {test: 1});
 
-        const result = await redisProvider.getAndDel<{test:1}>("redis_test");
+        const result = await redisProvider.getAndDel<{ test: 1 }>("redis_test");
 
         result.test.should.be.eq(1);
 
-        let result2 = await redisProvider.get<{test:1}>("redis_test");
+        let result2 = await redisProvider.get<{ test: 1 }>("redis_test");
 
         should.not.exist(result2)
 
@@ -108,8 +111,8 @@ describe("redis module Spec", function () {
 
     it("should wait for lock", async () => {
 
-        await redisProvider.waitForLock({key:"redis_lock_wait",ttl:10000});
-        let [err] = await Promises.to( redisProvider.waitForLock({key:"redis_lock_wait",ttl:50,retryCount:1}));
+        await redisProvider.waitForLock({key: "redis_lock_wait", ttl: 10000});
+        let [err] = await Promises.to(redisProvider.waitForLock({key: "redis_lock_wait", ttl: 50, retryCount: 1}));
 
         err.should.be.ok;
         err.message.should.be.eq("failed to get lock")
@@ -166,26 +169,78 @@ describe("redis module Spec", function () {
         result.validExpire.should.be.ok;
     });
 
-    it.only("should exist in set", async () => {
+    it("should exist in set", async () => {
 
 
-        await redisProvider.addToSet("redis_test_set","aaa","bbb","ccc");
+        await redisProvider.addToSet("redis_test_set", "aaa", "bbb", "ccc");
 
-        let result = await redisProvider.isExistsInSet({key:"redis_test_set", value:"asdfghjklbbbqwert",isPartial:true,partialMinLen:3});
+        let result = await redisProvider.isExistsInSet({
+            key: "redis_test_set",
+            value: "asdfghjklbbbqwert",
+            isPartial: true,
+            partialMinLen: 3
+        });
 
         result.should.be.ok;
 
-        await redisProvider.removeFromSet("redis_test_set","bbb");
+        await redisProvider.removeFromSet("redis_test_set", "bbb");
 
-         result = await redisProvider.isExistsInSet({key:"redis_test_set", value:"asdfghjklbbbqwert",isPartial:true,partialMinLen:3});
+        result = await redisProvider.isExistsInSet({
+            key: "redis_test_set",
+            value: "asdfghjklbbbqwert",
+            isPartial: true,
+            partialMinLen: 3
+        });
 
         result.should.not.be.ok;
 
-        result = await redisProvider.isExistsInSet({key:"redis_test_set", value:"aaa"});
+        result = await redisProvider.isExistsInSet({key: "redis_test_set", value: "aaa"});
 
         result.should.be.ok;
 
         await redisProvider.del("redis_test_set");
+
+
+    });
+
+
+});
+
+describe("redis module connection error", function () {
+
+    if (!process.env.REDIS) {
+        throw new Error(`please define process.env.REDIS`)
+    }
+
+    beforeEach(async () => {
+
+        app = createApp({root: __dirname, environment: "production"});
+
+        await app.module.use(RedisModule.for({
+            connection: process.env.REDIS.replace("13836", "13838"),
+            connectOnError: true,
+            logErrors: true,
+            fallbackConnections: []
+        }));
+
+        await app.launch();
+
+        redisProvider = app.injector.get<RedisProvider>("redisProvider");
+    });
+
+    afterEach(async () => {
+        await app.reset();
+    });
+
+
+    it("should reconnect on error", async () => {
+
+        try {
+            await Promises.timeout(redisProvider.get("redis_test_set"), 1000);
+
+        } catch (e) {
+            e.message.should.contain("timeout")
+        }
 
 
     });
