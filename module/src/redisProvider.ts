@@ -478,4 +478,11 @@ export class RedisProvider {
 
     }
 
+    public get status() {
+        return this.redis.status
+    }
+
+    public get isReady() {
+        return this.redis.status == "ready"
+    }
 }

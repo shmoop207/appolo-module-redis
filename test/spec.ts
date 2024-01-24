@@ -236,6 +236,9 @@ describe("redis module connection error", function () {
     it("should reconnect on error", async () => {
 
         try {
+
+            redisProvider.isReady.should.not.be.ok;
+
             await Promises.timeout(redisProvider.get("redis_test_set"), 1000);
 
         } catch (e) {

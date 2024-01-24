@@ -288,6 +288,12 @@ let RedisProvider = class RedisProvider {
         let result = await this.redis.smismember(key, members);
         return (result || []).some(value => value === 1);
     }
+    get status() {
+        return this.redis.status;
+    }
+    get isReady() {
+        return this.redis.status == "ready";
+    }
 };
 tslib_1.__decorate([
     (0, inject_1.inject)()
