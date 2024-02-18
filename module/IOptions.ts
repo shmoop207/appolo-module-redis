@@ -12,6 +12,7 @@ export interface IOptions {
     id?: string;
     connection: string
     fallbackConnections?: string[]
+    clusterConnections?: string[]
     opts?: redis.RedisOptions
     scripts?: IScript[]
     connectTimeout?: number,

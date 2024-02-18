@@ -6,10 +6,17 @@ import {RedisClientFactory} from "./redisClientFactory";
 @define()
 @singleton()
 export class RedisProvider {
+
+    private _redisClient: Redis.Redis
+
+    constructor(redisClient: Redis.Redis) {
+        this._redisClient = redisClient;
+    }
+
     @inject() protected redisClientFactory: RedisClientFactory;
 
     public get redis(): Redis.Redis {
-        return this.redisClientFactory.getClient();
+        return this._redisClient || this.redisClientFactory.getClient();
     }
 
     public async get<T>(key: string): Promise<T> {
@@ -29,7 +36,7 @@ export class RedisProvider {
 
         let output: T[] = [];
 
-        let results = await this.redisClientFactory.getClient().mget(...keys);
+        let results = await this.redis.mget(...keys);
 
         for (let i = 0, len = (results ? results.length : 0); i < len; i++) {
             output.push(JSON.parse(results[i]));
@@ -484,5 +491,13 @@ export class RedisProvider {
 
     public get isReady() {
         return this.redis.status == "ready"
+    }
+
+    public get cluster() {
+        return {
+            hash: (key: string) => new RedisProvider(this.redisClientFactory.getClientHash(key)),
+            random: () => new RedisProvider(this.redisClientFactory.getClientRandom()),
+            all: () => this.redisClientFactory.getAllClients().map(client => new RedisProvider(client)),
+        }
     }
 }

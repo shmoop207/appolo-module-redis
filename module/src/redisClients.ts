@@ -19,10 +19,21 @@ export class RedisClients implements IFactory<Redis[]> {
     private readonly Defaults = {enableReadyCheck: true, lazyConnect: true, keepAlive: 1000};
 
     public async get(): Promise<Redis[]> {
-        let fallback = this.moduleOptions.fallbackConnections;
 
-        let connections = [this.moduleOptions.connection]
-            .concat(fallback && Array.isArray(fallback) ? fallback : []);
+
+        let connections: string[] = [];
+
+        if (this.moduleOptions.clusterConnections?.length) {
+
+            connections = this.moduleOptions.clusterConnections;
+
+        } else {
+
+            let fallback = this.moduleOptions.fallbackConnections;
+
+            connections = [this.moduleOptions.connection]
+                .concat(fallback && Array.isArray(fallback) ? fallback : []);
+        }
 
         let clients = await Promise.all(connections.map(conn => this.create(conn)))
 

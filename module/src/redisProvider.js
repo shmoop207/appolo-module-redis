@@ -1,12 +1,16 @@
 "use strict";
+var RedisProvider_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisProvider = void 0;
 const tslib_1 = require("tslib");
 const inject_1 = require("@appolo/inject");
 const utils_1 = require("@appolo/utils");
-let RedisProvider = class RedisProvider {
+let RedisProvider = RedisProvider_1 = class RedisProvider {
+    constructor(redisClient) {
+        this._redisClient = redisClient;
+    }
     get redis() {
-        return this.redisClientFactory.getClient();
+        return this._redisClient || this.redisClientFactory.getClient();
     }
     async get(key) {
         let result = await this.redis.get(key);
@@ -18,7 +22,7 @@ let RedisProvider = class RedisProvider {
     }
     async multiGet(keys) {
         let output = [];
-        let results = await this.redisClientFactory.getClient().mget(...keys);
+        let results = await this.redis.mget(...keys);
         for (let i = 0, len = (results ? results.length : 0); i < len; i++) {
             output.push(JSON.parse(results[i]));
         }
@@ -294,11 +298,18 @@ let RedisProvider = class RedisProvider {
     get isReady() {
         return this.redis.status == "ready";
     }
+    get cluster() {
+        return {
+            hash: (key) => new RedisProvider_1(this.redisClientFactory.getClientHash(key)),
+            random: () => new RedisProvider_1(this.redisClientFactory.getClientRandom()),
+            all: () => this.redisClientFactory.getAllClients().map(client => new RedisProvider_1(client)),
+        };
+    }
 };
 tslib_1.__decorate([
     (0, inject_1.inject)()
 ], RedisProvider.prototype, "redisClientFactory", void 0);
-RedisProvider = tslib_1.__decorate([
+RedisProvider = RedisProvider_1 = tslib_1.__decorate([
     (0, inject_1.define)(),
     (0, inject_1.singleton)()
 ], RedisProvider);

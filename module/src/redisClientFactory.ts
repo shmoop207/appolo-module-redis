@@ -1,4 +1,5 @@
 import {define, inject, singleton} from "@appolo/inject";
+import {Arrays, Hash} from "@appolo/utils";
 import {IOptions, IScript} from "../IOptions";
 import Redis = require("ioredis");
 
@@ -9,15 +10,39 @@ export class RedisClientFactory {
 
     @inject() protected redisClients: Redis.Redis[]
 
-    public getClient() {
-        let client = this.redisClients[0];
-        for (let i = 0; i < this.redisClients.length; i++) {
-            if (this.redisClients[i].status === "ready") {
-                return this.redisClients[i];
-            }
+    public getClient(): Redis.Redis {
+
+        if (this.redisClients.length === 1) {
+            return this.redisClients[0];
         }
 
-        return client;
+        let client = this.redisClients.find(client => client.status === "ready");
+
+        return client || this.redisClients[0];
+    }
+
+    public getClientRandom(): Redis.Redis {
+        let clients = this._getReadClients()
+
+        return Arrays.random(clients)
+    }
+
+    public getClientHash(key: string): Redis.Redis {
+        let clients = this._getReadClients()
+
+        let index = Hash.strNumHash(key) % clients.length
+
+        return clients[index] || clients[0];
+    }
+
+    public getAllClients(): Redis.Redis[] {
+        return this._getReadClients();
+    }
+
+    private _getReadClients(): Redis.Redis[] {
+        let clients = this.redisClients.filter(client => client.status === "ready");
+
+        return clients.length ? clients : [this.redisClients[0]];
     }
 
 
