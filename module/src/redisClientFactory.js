@@ -13,20 +13,19 @@ let RedisClientFactory = class RedisClientFactory {
         return client || this.redisClients[0];
     }
     getClientRandom() {
-        let clients = this._getReadClients();
+        let clients = this.redisClients;
         return utils_1.Arrays.random(clients);
     }
     getClientHash(key) {
-        let clients = this._getReadClients();
+        let clients = this.redisClients;
         let index = utils_1.Hash.strNumHash(key) % clients.length;
         return clients[index] || clients[0];
     }
     getAllClients() {
-        return this._getReadClients();
+        return this.redisClients.slice(0);
     }
-    _getReadClients() {
-        let clients = this.redisClients.filter(client => client.status === "ready");
-        return clients.length ? clients : [this.redisClients[0]];
+    getReadyClients() {
+        return this.redisClients.filter(client => client.status === "ready");
     }
 };
 tslib_1.__decorate([

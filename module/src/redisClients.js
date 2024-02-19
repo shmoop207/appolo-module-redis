@@ -12,13 +12,14 @@ let RedisClients = class RedisClients {
     async get() {
         var _a;
         let connections = [];
-        if ((_a = this.moduleOptions.clusterConnections) === null || _a === void 0 ? void 0 : _a.length) {
-            connections = this.moduleOptions.clusterConnections;
+        if (this.moduleOptions.connection) {
+            connections.push(this.moduleOptions.connection);
         }
-        else {
-            let fallback = this.moduleOptions.fallbackConnections;
-            connections = [this.moduleOptions.connection]
-                .concat(fallback && Array.isArray(fallback) ? fallback : []);
+        if ((_a = this.moduleOptions.clusterConnections) === null || _a === void 0 ? void 0 : _a.length) {
+            connections.push(...this.moduleOptions.clusterConnections);
+        }
+        else if (this.moduleOptions.fallbackConnections.length) {
+            connections.push(...this.moduleOptions.fallbackConnections);
         }
         let clients = await Promise.all(connections.map(conn => this.create(conn)));
         await this.scriptsManager.load(clients);

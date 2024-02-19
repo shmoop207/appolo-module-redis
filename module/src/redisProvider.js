@@ -303,6 +303,7 @@ let RedisProvider = RedisProvider_1 = class RedisProvider {
             hash: (key) => new RedisProvider_1(this.redisClientFactory.getClientHash(key)),
             random: () => new RedisProvider_1(this.redisClientFactory.getClientRandom()),
             all: () => this.redisClientFactory.getAllClients().map(client => new RedisProvider_1(client)),
+            ready: () => this.redisClientFactory.getReadyClients().map(client => new RedisProvider_1(client)),
         };
     }
 };

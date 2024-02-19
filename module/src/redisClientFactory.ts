@@ -22,13 +22,13 @@ export class RedisClientFactory {
     }
 
     public getClientRandom(): Redis.Redis {
-        let clients = this._getReadClients()
+        let clients = this.redisClients;
 
         return Arrays.random(clients)
     }
 
     public getClientHash(key: string): Redis.Redis {
-        let clients = this._getReadClients()
+        let clients = this.redisClients;
 
         let index = Hash.strNumHash(key) % clients.length
 
@@ -36,13 +36,11 @@ export class RedisClientFactory {
     }
 
     public getAllClients(): Redis.Redis[] {
-        return this._getReadClients();
+        return this.redisClients.slice(0);
     }
 
-    private _getReadClients(): Redis.Redis[] {
-        let clients = this.redisClients.filter(client => client.status === "ready");
-
-        return clients.length ? clients : [this.redisClients[0]];
+    public getReadyClients(): Redis.Redis[] {
+        return this.redisClients.filter(client => client.status === "ready");
     }
 
 

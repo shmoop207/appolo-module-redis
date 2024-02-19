@@ -23,16 +23,17 @@ export class RedisClients implements IFactory<Redis[]> {
 
         let connections: string[] = [];
 
+        if (this.moduleOptions.connection) {
+            connections.push(this.moduleOptions.connection);
+        }
+
         if (this.moduleOptions.clusterConnections?.length) {
 
-            connections = this.moduleOptions.clusterConnections;
+            connections.push(...this.moduleOptions.clusterConnections)
 
-        } else {
+        } else if (this.moduleOptions.fallbackConnections.length) {
 
-            let fallback = this.moduleOptions.fallbackConnections;
-
-            connections = [this.moduleOptions.connection]
-                .concat(fallback && Array.isArray(fallback) ? fallback : []);
+            connections.push(...this.moduleOptions.fallbackConnections)
         }
 
         let clients = await Promise.all(connections.map(conn => this.create(conn)))

@@ -498,6 +498,7 @@ export class RedisProvider {
             hash: (key: string) => new RedisProvider(this.redisClientFactory.getClientHash(key)),
             random: () => new RedisProvider(this.redisClientFactory.getClientRandom()),
             all: () => this.redisClientFactory.getAllClients().map(client => new RedisProvider(client)),
+            ready: () => this.redisClientFactory.getReadyClients().map(client => new RedisProvider(client)),
         }
     }
 }

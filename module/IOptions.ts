@@ -10,7 +10,7 @@ export interface IScript {
 
 export interface IOptions {
     id?: string;
-    connection: string
+    connection?: string
     fallbackConnections?: string[]
     clusterConnections?: string[]
     opts?: redis.RedisOptions
