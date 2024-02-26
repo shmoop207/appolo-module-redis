@@ -10,15 +10,14 @@ let RedisClients = class RedisClients {
         this.Defaults = { enableReadyCheck: true, lazyConnect: true, keepAlive: 1000 };
     }
     async get() {
-        var _a;
         let connections = [];
         if (this.moduleOptions.connection) {
             connections.push(this.moduleOptions.connection);
         }
-        if ((_a = this.moduleOptions.clusterConnections) === null || _a === void 0 ? void 0 : _a.length) {
+        if (this.moduleOptions.clusterConnections?.length) {
             connections.push(...this.moduleOptions.clusterConnections);
         }
-        else if (this.moduleOptions.fallbackConnections.length) {
+        else if (this.moduleOptions.fallbackConnections?.length) {
             connections.push(...this.moduleOptions.fallbackConnections);
         }
         let clients = await Promise.all(connections.map(conn => this.create(conn)));

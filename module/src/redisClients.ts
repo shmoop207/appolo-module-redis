@@ -31,7 +31,7 @@ export class RedisClients implements IFactory<Redis[]> {
 
             connections.push(...this.moduleOptions.clusterConnections)
 
-        } else if (this.moduleOptions.fallbackConnections.length) {
+        } else if (this.moduleOptions.fallbackConnections?.length) {
 
             connections.push(...this.moduleOptions.fallbackConnections)
         }
